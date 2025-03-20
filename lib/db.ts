@@ -118,6 +118,12 @@ class HabitDatabase {
     return true
   }
 
+  async deleteAllHabits(): Promise<boolean> {
+    await prisma.habitLog.deleteMany({})
+    await prisma.habit.deleteMany({})
+    return true
+  }
+
   async getLogsByHabitId(habitId: string): Promise<HabitLog[]> {
     return prisma.habitLog.findMany({
       where: { habitId },

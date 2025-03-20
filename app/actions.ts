@@ -30,6 +30,11 @@ export async function deleteHabit(id: string) {
   return result
 }
 
+export async function deleteAllHabits() {
+  await db.deleteAllHabits()
+  revalidatePath("/")
+}
+
 export async function toggleHabitLog(habitId: string, date: string) {
   const log = await db.toggleHabitLog(habitId, date)
   revalidatePath("/")
