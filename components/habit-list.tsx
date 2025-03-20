@@ -33,6 +33,13 @@ export function HabitList({ habits }: HabitListProps) {
   const month = currentDate.getMonth()
   const daysInMonth = getDaysInMonth(year, month)
 
+  const isToday = (date: Date) => {
+    const today = new Date()
+    return date.getDate() === today.getDate() &&
+           date.getMonth() === today.getMonth() &&
+           date.getFullYear() === today.getFullYear()
+  }
+
   const handleToggleLog = async (habitId: string, date: Date) => {
     await toggleHabitLog(habitId, formatDate(date))
   }
@@ -106,7 +113,11 @@ export function HabitList({ habits }: HabitListProps) {
             <tr>
               <th className="text-left p-2 min-w-[150px]">Habits</th>
               {daysInMonth.map((day) => (
-                <th className="text-center p-2 w-10">
+                <th 
+                  className={`text-center p-2 w-10 ${
+                    isToday(day) ? 'bg-muted' : ''
+                  }`}
+                >
                   <div className="flex flex-col items-center">
                     <span className="text-xs text-gray-500">
                       {day.toLocaleDateString("en-US", { weekday: "short" }).charAt(0)}
@@ -135,7 +146,11 @@ export function HabitList({ habits }: HabitListProps) {
                   const date = formatDate(day)
                   const log = habit.logs.find((log) => log.date === date)
                   return (
-                    <td className="text-center p-2">
+                    <td 
+                      className={`text-center p-2 ${
+                        isToday(day) ? 'bg-muted' : ''
+                      }`}
+                    >
                       <Button
                         variant="ghost"
                         size="icon"
