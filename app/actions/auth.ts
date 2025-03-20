@@ -15,7 +15,8 @@ export async function login(formData: FormData) {
   }
 
   // Set the auth cookie
-  cookies().set({
+  const cookieStore = await cookies()
+  cookieStore.set({
     name: 'auth-token',
     value: envPassword,
     httpOnly: true,
@@ -28,6 +29,7 @@ export async function login(formData: FormData) {
 }
 
 export async function logout() {
-  cookies().delete('auth-token')
+  const cookieStore = await cookies()
+  cookieStore.delete('auth-token')
   return { success: true }
 } 

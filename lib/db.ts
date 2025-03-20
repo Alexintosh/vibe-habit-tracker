@@ -1,4 +1,4 @@
-import type { Habit, HabitLog, HabitWithLogs } from "./types"
+import type { Habit, HabitLog, HabitWithLogs, Frequency } from "./types"
 import { prisma } from "./prisma"
 import type { Prisma } from "@prisma/client"
 
@@ -78,6 +78,8 @@ class HabitDatabase {
     })
     return habits.map((habit: PrismaHabit) => ({
       ...habit,
+      description: habit.description ?? '',
+      frequency: habit.frequency as Frequency,
       createdAt: habit.createdAt.toISOString()
     }))
   }
@@ -89,6 +91,8 @@ class HabitDatabase {
     if (!habit) return null
     return {
       ...habit,
+      description: habit.description ?? '',
+      frequency: habit.frequency as Frequency,
       createdAt: habit.createdAt.toISOString()
     }
   }
@@ -110,6 +114,8 @@ class HabitDatabase {
     })
     return {
       ...created,
+      description: created.description ?? '',
+      frequency: created.frequency as Frequency,
       createdAt: created.createdAt.toISOString()
     }
   }
