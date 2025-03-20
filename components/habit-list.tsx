@@ -40,8 +40,9 @@ export function HabitList({ habits }: HabitListProps) {
            date.getFullYear() === today.getFullYear()
   }
 
-  const handleToggleLog = async (habitId: string, date: Date) => {
-    await toggleHabitLog(habitId, formatDate(date))
+  const handleToggleLog = async (habitId: string, date: Date | string) => {
+    const formattedDate = date instanceof Date ? formatDate(date) : date
+    await toggleHabitLog(habitId, formattedDate)
   }
 
   const handleDeleteHabit = async (habitId: string) => {
@@ -59,6 +60,30 @@ export function HabitList({ habits }: HabitListProps) {
   const handleCancelEdit = () => {
     setEditingHabit(null)
     setIsAddingHabit(false)
+  }
+
+  const handleColumnSelect = async (day: Date) => {
+    // Get the formatted date for this column
+    const date = formatDate(day)
+    
+    // Find all habits that have a log for this date
+    const logsForDate = habits.map(habit => ({
+      habitId: habit.id,
+      log: habit.logs.find(log => log.date === date)
+    }))
+    
+    // Determine if we should mark all as completed or uncompleted
+    // If more than half are completed, we'll mark all as uncompleted
+    const completedCount = logsForDate.filter(({ log }) => log?.completed).length
+    const shouldComplete = completedCount <= habits.length / 2
+
+    // Toggle all habits for this date
+    for (const habit of habits) {
+      const log = habit.logs.find(log => log.date === date)
+      if ((log?.completed ?? false) !== shouldComplete) {
+        await toggleHabitLog(habit.id, date)
+      }
+    }
   }
 
   if (editingHabit) {
@@ -114,6 +139,7 @@ export function HabitList({ habits }: HabitListProps) {
               <th className="text-left p-2 min-w-[150px]">Habits</th>
               {daysInMonth.map((day) => (
                 <th 
+                  key={day.getTime()}
                   className={`text-center p-2 w-10 ${
                     isToday(day) ? 'bg-muted' : ''
                   }`}
@@ -122,7 +148,14 @@ export function HabitList({ habits }: HabitListProps) {
                     <span className="text-xs text-gray-500">
                       {day.toLocaleDateString("en-US", { weekday: "short" }).charAt(0)}
                     </span>
-                    <span>{day.getDate()}</span>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-6 w-6 p-0 hover:bg-accent"
+                      onClick={() => handleColumnSelect(day)}
+                    >
+                      {day.getDate()}
+                    </Button>
                   </div>
                 </th>
               ))}
