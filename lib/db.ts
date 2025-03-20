@@ -8,10 +8,17 @@ class HabitDatabase {
   private initialized = false
 
   constructor() {
-    // Initialize from localStorage when in browser environment
+    // Initialize with empty state for SSR
+    this.habits = []
+    this.logs = []
+    
+    // We'll load from storage in a useEffect on the client side
     if (typeof window !== "undefined") {
-      this.loadFromStorage()
-      this.initialized = true
+      // Defer loading to avoid hydration mismatch
+      setTimeout(() => {
+        this.loadFromStorage()
+        this.initialized = true
+      }, 0)
     }
   }
 

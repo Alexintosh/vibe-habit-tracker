@@ -4,7 +4,9 @@ import { HabitList } from "@/components/habit-list"
 import { ProgressSummary } from "@/components/progress-summary"
 
 export default async function Home() {
-  const today = new Date()
+  // Use start of current day to avoid hydration mismatch
+  const now = new Date()
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
   const habits = await getHabitsWithLogs(today.getFullYear(), today.getMonth())
 
   return (

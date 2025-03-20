@@ -74,7 +74,7 @@ export function HabitList({ habits }: HabitListProps) {
             <tr>
               <th className="text-left p-2 min-w-[150px]">Habits</th>
               {daysInMonth.map((day) => (
-                <th key={day.getDate()} className="text-center p-2 w-10">
+                <th className="text-center p-2 w-10">
                   <div className="flex flex-col items-center">
                     <span className="text-xs text-gray-500">
                       {day.toLocaleDateString("en-US", { weekday: "short" }).charAt(0)}
@@ -106,7 +106,7 @@ export function HabitList({ habits }: HabitListProps) {
                     const isCompleted = log?.completed || false
 
                     return (
-                      <td key={dateStr} className="text-center p-1">
+                      <td className="text-center p-1">
                         <button
                           className={`w-8 h-8 rounded transition-colors ${
                             isCompleted ? "bg-opacity-70" : "bg-opacity-20 hover:bg-opacity-30"
