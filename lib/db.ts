@@ -1,4 +1,23 @@
 import type { Habit, HabitLog, HabitWithLogs } from "./types"
+import { prisma } from "./prisma"
+import type { Prisma } from "@prisma/client"
+
+type PrismaHabit = {
+  id: string
+  name: string
+  description: string | null
+  frequency: string
+  goal: number
+  color: string
+  createdAt: Date
+}
+
+type PrismaHabitLog = {
+  id: string
+  habitId: string
+  date: string
+  completed: boolean
+}
 
 // In a real application, this would be replaced with a proper database
 // For now, we'll use localStorage for persistence
@@ -51,107 +70,117 @@ class HabitDatabase {
   }
 
   async getHabits(): Promise<Habit[]> {
-    return [...this.habits]
+    const habits = await prisma.habit.findMany({
+      orderBy: { createdAt: 'desc' }
+    })
+    return habits.map((habit: PrismaHabit) => ({
+      ...habit,
+      createdAt: habit.createdAt.toISOString()
+    }))
   }
 
   async getHabitById(id: string): Promise<Habit | null> {
-    return this.habits.find((habit) => habit.id === id) || null
+    const habit = await prisma.habit.findUnique({
+      where: { id }
+    })
+    if (!habit) return null
+    return {
+      ...habit,
+      createdAt: habit.createdAt.toISOString()
+    }
   }
 
   async createHabit(habit: Omit<Habit, "id" | "createdAt">): Promise<Habit> {
-    const newHabit: Habit = {
-      ...habit,
-      id: crypto.randomUUID(),
-      createdAt: new Date().toISOString(),
+    const created = await prisma.habit.create({
+      data: habit
+    })
+    return {
+      ...created,
+      createdAt: created.createdAt.toISOString()
     }
-
-    this.habits.push(newHabit)
-    this.saveToStorage()
-
-    return newHabit
   }
 
   async updateHabit(id: string, updates: Partial<Omit<Habit, "id" | "createdAt">>): Promise<Habit | null> {
-    const index = this.habits.findIndex((habit) => habit.id === id)
-
-    if (index === -1) return null
-
-    const updatedHabit = {
-      ...this.habits[index],
-      ...updates,
+    const updated = await prisma.habit.update({
+      where: { id },
+      data: updates
+    })
+    return {
+      ...updated,
+      createdAt: updated.createdAt.toISOString()
     }
-
-    this.habits[index] = updatedHabit
-    this.saveToStorage()
-
-    return updatedHabit
   }
 
   async deleteHabit(id: string): Promise<boolean> {
-    const initialLength = this.habits.length
-    this.habits = this.habits.filter((habit) => habit.id !== id)
-
-    // Also delete associated logs
-    this.logs = this.logs.filter((log) => log.habitId !== id)
-
-    this.saveToStorage()
-
-    return this.habits.length < initialLength
+    await prisma.habit.delete({
+      where: { id }
+    })
+    return true
   }
 
   async getLogsByHabitId(habitId: string): Promise<HabitLog[]> {
-    return this.logs.filter((log) => log.habitId === habitId)
+    return prisma.habitLog.findMany({
+      where: { habitId },
+      orderBy: { date: 'desc' }
+    })
   }
 
   async getLogsByDateRange(startDate: string, endDate: string): Promise<HabitLog[]> {
-    return this.logs.filter((log) => {
-      return log.date >= startDate && log.date <= endDate
+    return prisma.habitLog.findMany({
+      where: {
+        date: {
+          gte: startDate,
+          lte: endDate
+        }
+      },
+      orderBy: { date: 'desc' }
     })
   }
 
   async toggleHabitLog(habitId: string, date: string): Promise<HabitLog> {
-    const existingLog = this.logs.find((log) => log.habitId === habitId && log.date === date)
+    const existingLog = await prisma.habitLog.findFirst({
+      where: { habitId, date }
+    })
 
     if (existingLog) {
-      // Toggle existing log
-      existingLog.completed = !existingLog.completed
-      this.saveToStorage()
-      return existingLog
-    } else {
-      // Create new log
-      const newLog: HabitLog = {
-        id: crypto.randomUUID(),
+      return prisma.habitLog.update({
+        where: { id: existingLog.id },
+        data: { completed: !existingLog.completed }
+      })
+    }
+
+    return prisma.habitLog.create({
+      data: {
         habitId,
         date,
-        completed: true,
+        completed: true
       }
-
-      this.logs.push(newLog)
-      this.saveToStorage()
-
-      return newLog
-    }
+    })
   }
 
   async getHabitsWithLogs(year: number, month: number): Promise<HabitWithLogs[]> {
-    const startDate = new Date(year, month, 1)
-    const endDate = new Date(year, month + 1, 0)
+    const startDate = new Date(year, month, 1).toISOString().split('T')[0]
+    const endDate = new Date(year, month + 1, 0).toISOString().split('T')[0]
 
-    const startDateStr = startDate.toISOString().split("T")[0]
-    const endDateStr = endDate.toISOString().split("T")[0]
-
-    const logs = await this.getLogsByDateRange(startDateStr, endDateStr)
-
-    return this.habits.map((habit) => {
-      const habitLogs = logs.filter((log) => log.habitId === habit.id)
-      const achieved = habitLogs.filter((log) => log.completed).length
-
-      return {
-        ...habit,
-        logs: habitLogs,
-        achieved,
-      }
+    const habits = await prisma.habit.findMany({
+      include: {
+        logs: {
+          where: {
+            date: {
+              gte: startDate,
+              lte: endDate
+            }
+          }
+        }
+      },
+      orderBy: { createdAt: 'desc' }
     })
+
+    return habits.map((habit: PrismaHabit & { logs: PrismaHabitLog[] }) => ({
+      ...habit,
+      createdAt: habit.createdAt.toISOString(),
+      achieved: habit.logs.filter((log: PrismaHabitLog) => log.completed).length
+    }))
   }
 }
 

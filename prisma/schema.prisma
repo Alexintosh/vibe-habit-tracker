@@ -1,0 +1,35 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model Habit {
+  id          String     @id @default(uuid())
+  name        String
+  description String?
+  frequency   String     // "daily" | "weekly"
+  goal        Int
+  color       String
+  createdAt   DateTime   @default(now())
+  logs        HabitLog[]
+
+  @@index([createdAt])
+}
+
+model HabitLog {
+  id        String   @id @default(uuid())
+  habitId   String
+  date      String
+  completed Boolean  @default(false)
+  habit     Habit    @relation(fields: [habitId], references: [id], onDelete: Cascade)
+
+  @@index([habitId])
+  @@index([date])
+}
