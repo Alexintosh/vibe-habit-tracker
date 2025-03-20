@@ -17,10 +17,12 @@ model Habit {
   frequency   String     // "daily" | "weekly"
   goal        Int
   color       String
+  order       Int       @default(0)
   createdAt   DateTime   @default(now())
   logs        HabitLog[]
 
   @@index([createdAt])
+  @@index([order])
 }
 
 model HabitLog {

@@ -1,8 +1,8 @@
 "use client"
 
 import { useState } from "react"
-import type { Habit, HabitWithLogs } from "@/lib/types"
-import { deleteHabit, deleteAllHabits, toggleHabitLog } from "@/app/actions"
+import type { Habit, HabitWithLogs, HabitLog } from "@/lib/types"
+import { deleteHabit, deleteAllHabits, toggleHabitLog, updateHabitOrders } from "@/app/actions"
 import { useAppContext } from "@/app/providers"
 import { formatDate, getDaysInMonth } from "@/lib/date-utils"
 import { Button } from "@/components/ui/button"
@@ -19,7 +19,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
-import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors } from '@dnd-kit/core'
+import { DndContext, DragEndEvent, KeyboardSensor, PointerSensor, closestCenter, useSensor, useSensors } from '@dnd-kit/core'
 import { SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 
@@ -174,15 +174,22 @@ export function HabitList({ habits: initialHabits }: HabitListProps) {
       const formattedDate = formatDate(date)
       const existingLog = habit.logs.find(log => log.date === formattedDate)
       
+      const newLogs = existingLog
+        ? habit.logs.map(log => 
+            log.date === formattedDate 
+              ? { ...log, completed: !log.completed }
+              : log
+          )
+        : [...habit.logs, { 
+            id: `${habitId}-${formattedDate}`,
+            habitId,
+            date: formattedDate,
+            completed: true
+          }]
+
       return {
         ...habit,
-        logs: existingLog
-          ? habit.logs.map(log => 
-              log.date === formattedDate 
-                ? { ...log, completed: !log.completed }
-                : log
-            )
-          : [...habit.logs, { date: formattedDate, completed: true }]
+        logs: newLogs
       }
     }))
   }
@@ -229,15 +236,22 @@ export function HabitList({ habits: initialHabits }: HabitListProps) {
     setHabits(habits.map(habit => {
       const existingLog = habit.logs.find(log => log.date === date)
       
+      const newLogs = existingLog
+        ? habit.logs.map(log => 
+            log.date === date 
+              ? { ...log, completed: shouldComplete }
+              : log
+          )
+        : [...habit.logs, { 
+            id: `${habit.id}-${date}`,
+            habitId: habit.id,
+            date,
+            completed: shouldComplete
+          }]
+
       return {
         ...habit,
-        logs: existingLog
-          ? habit.logs.map(log => 
-              log.date === date 
-                ? { ...log, completed: shouldComplete }
-                : log
-            )
-          : [...habit.logs, { date, completed: shouldComplete }]
+        logs: newLogs
       }
     }))
   }
@@ -249,23 +263,42 @@ export function HabitList({ habits: initialHabits }: HabitListProps) {
     })
   )
 
-  const handleDragEnd = (event: any) => {
+  const handleDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event
 
-    if (active.id !== over.id) {
-      setHabits((items) => {
-        const oldIndex = items.findIndex((item) => item.id === active.id)
-        const newIndex = items.findIndex((item) => item.id === over.id)
+    if (active.id !== over?.id) {
+      const oldIndex = habits.findIndex((item) => item.id === active.id)
+      const newIndex = habits.findIndex((item) => item.id === over?.id)
 
-        const newItems = [...items]
-        const [removed] = newItems.splice(oldIndex, 1)
-        newItems.splice(newIndex, 0, removed)
+      // Create a deep copy of the habits array to preserve all properties
+      const newItems = habits.map(habit => {
+        const { logs, ...rest } = habit
+        return {
+          ...rest,
+          logs: logs.map(log => ({
+            id: log.id,
+            habitId: log.habitId,
+            date: log.date,
+            completed: log.completed
+          })) as HabitLog[],
+          achieved: habit.achieved
+        }
+      }) as HabitWithLogs[]
 
-        // Here you would typically also update the order in your database
-        // You can add a server action to handle this
+      const [removed] = newItems.splice(oldIndex, 1)
+      newItems.splice(newIndex, 0, removed)
 
-        return newItems
-      })
+      // Update the order property for each habit
+      const updates = newItems.map((habit, index) => ({
+        id: habit.id,
+        order: index
+      }))
+
+      // Save the new order to the database
+      await updateHabitOrders(updates)
+
+      // Update the local state
+      setHabits(newItems)
     }
   }
 

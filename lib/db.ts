@@ -71,7 +71,10 @@ class HabitDatabase {
 
   async getHabits(): Promise<Habit[]> {
     const habits = await prisma.habit.findMany({
-      orderBy: { createdAt: 'desc' }
+      orderBy: [
+        { order: 'asc' },
+        { createdAt: 'desc' }
+      ]
     })
     return habits.map((habit: PrismaHabit) => ({
       ...habit,
@@ -91,8 +94,19 @@ class HabitDatabase {
   }
 
   async createHabit(habit: Omit<Habit, "id" | "createdAt">): Promise<Habit> {
+    // Get the highest order value
+    const maxOrder = await prisma.habit.aggregate({
+      _max: {
+        order: true
+      }
+    })
+
+    // Create the habit with the next order value
     const created = await prisma.habit.create({
-      data: habit
+      data: {
+        ...habit,
+        order: (maxOrder._max.order ?? -1) + 1
+      }
     })
     return {
       ...created,
@@ -179,7 +193,10 @@ class HabitDatabase {
           }
         }
       },
-      orderBy: { createdAt: 'desc' }
+      orderBy: [
+        { order: 'asc' },
+        { createdAt: 'desc' }
+      ]
     })
 
     return habits.map((habit: PrismaHabit & { logs: PrismaHabitLog[] }) => ({
@@ -187,6 +204,19 @@ class HabitDatabase {
       createdAt: habit.createdAt.toISOString(),
       achieved: habit.logs.filter((log: PrismaHabitLog) => log.completed).length
     }))
+  }
+
+  async updateHabitOrders(updates: { id: string; order: number }[]): Promise<boolean> {
+    // Use a transaction to ensure all updates succeed or none do
+    await prisma.$transaction(
+      updates.map(({ id, order }) =>
+        prisma.habit.update({
+          where: { id },
+          data: { order }
+        })
+      )
+    )
+    return true
   }
 }
 

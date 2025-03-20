@@ -3,6 +3,9 @@
 import { db } from "@/lib/db"
 import type { Habit } from "@/lib/types"
 import { revalidatePath } from "next/cache"
+import { PrismaClient } from "@prisma/client"
+
+const prisma = new PrismaClient()
 
 export async function getHabits() {
   return db.getHabits()
@@ -43,5 +46,16 @@ export async function toggleHabitLog(habitId: string, date: string) {
 
 export async function getHabitsWithLogs(year: number, month: number) {
   return db.getHabitsWithLogs(year, month)
+}
+
+export async function updateHabitOrders(updates: { id: string; order: number }[]) {
+  try {
+    await db.updateHabitOrders(updates)
+    revalidatePath('/')
+    return { success: true }
+  } catch (error) {
+    console.error('Failed to update habit orders:', error)
+    return { success: false, error: 'Failed to update habit orders' }
+  }
 }
 
