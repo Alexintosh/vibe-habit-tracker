@@ -1,0 +1,40 @@
+{
+  "habits": [
+    {
+      "name": "Morning Meditation",
+      "description": "10 minutes of mindfulness",
+      "category": "MORNING",
+      "frequency": "daily",
+      "goal": 1,
+      "color": "#FF5733",
+      "order": 1
+    },
+    {
+      "name": "Eggs",
+      "description": "Start the day with protein and fruits",
+      "category": "BREAKFAST",
+      "frequency": "weekly",
+      "goal": 1,
+      "color": "#33FF57",
+      "order": 2
+    },
+    {
+        "name": "Oatmeal",
+        "description": "oats with milk",
+        "category": "BREAKFAST",
+        "frequency": "weekly",
+        "goal": 1,
+        "color": "#33FF57",
+        "order": 3
+      },
+      {
+        "name": "Yogourt",
+        "description": "oats with milk",
+        "category": "BREAKFAST",
+        "frequency": "weekly",
+        "goal": 1,
+        "color": "#33FF57",
+        "order": 3
+      }
+  ]
+} 

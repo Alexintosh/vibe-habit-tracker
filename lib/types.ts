@@ -1,10 +1,13 @@
 export type Frequency = "daily" | "weekly"
 
+export type HabitCategory = "MORNING" | "BREAKFAST" | "HEALTH" | "BUILDING" | "OTHER"
+
 export interface Habit {
   id: string
   name: string
   description: string
   frequency: Frequency
+  category: HabitCategory
   goal: number
   color: string
   createdAt: string

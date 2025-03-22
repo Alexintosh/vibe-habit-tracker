@@ -24,11 +24,12 @@ import { SortableContext, sortableKeyboardCoordinates, verticalListSortingStrate
 import { CSS } from '@dnd-kit/utilities'
 
 interface HabitListProps {
-  habits: HabitWithLogs[]
+  habits: HabitWithLogs[],
+  title: string
 }
 
 // Create a sortable row component
-function SortableHabitRow({ 
+export function SortableHabitRow({ 
   habit, 
   daysInMonth,
   onToggleLog,
@@ -39,7 +40,7 @@ function SortableHabitRow({
   habit: HabitWithLogs
   daysInMonth: Date[]
   onToggleLog: (habitId: string, date: Date) => void
-  onEditHabit: (habit: Habit) => void
+  onEditHabit: (habit: HabitWithLogs) => void
   onDeleteHabit: (habitId: string) => void
   isToday: (date: Date) => boolean
 }) {
@@ -75,9 +76,9 @@ function SortableHabitRow({
           </button>
           <div>
             <div className="font-medium">{habit.name}</div>
-            {habit.description && (
+            {/* {habit.description && (
               <div className="text-sm text-gray-500">{habit.description}</div>
-            )}
+            )} */}
           </div>
         </div>
       </td>
@@ -147,7 +148,7 @@ function SortableHabitRow({
   )
 }
 
-export function HabitList({ habits: initialHabits }: HabitListProps) {
+export function HabitList({ habits: initialHabits, title }: HabitListProps) {
   const { currentDate } = useAppContext()
   const [habits, setHabits] = useState(initialHabits)
   const [editingHabit, setEditingHabit] = useState<Habit | null>(null)
@@ -313,7 +314,7 @@ export function HabitList({ habits: initialHabits }: HabitListProps) {
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h2 className="text-xl font-semibold">Habits</h2>
+        <h2 className="text-xl font-semibold capitalize">{title} ({habits.length})</h2>
         <div className="flex gap-2">
           <Button onClick={() => setIsAddingHabit(true)} className="flex items-center gap-1">
             <Plus className="h-4 w-4" />
