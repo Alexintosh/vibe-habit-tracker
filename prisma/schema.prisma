@@ -10,19 +10,11 @@ datasource db {
   url      = "file:./dev.db"
 }
 
-enum HabitCategory {
-  MORNING
-  BREAKFAST
-  HEALTH
-  BUILDING
-  OTHER
-}
-
 model Habit {
   id          String     @id @default(uuid())
   name        String
   description String?
-  category    HabitCategory @default(OTHER)
+  category    String @default("OTHER")
   frequency   String     // "daily" | "weekly"
   goal        Int
   color       String

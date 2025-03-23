@@ -26,6 +26,22 @@ export function NavMenu() {
           >
             Weekly View
           </Link>
+          <Link 
+            href="/month" 
+            className={`text-sm font-medium transition-colors hover:text-primary ${
+              pathname === "/month" ? "text-primary" : "text-muted-foreground"
+            }`}
+          >
+            Monthly View
+          </Link>
+          <Link 
+            href="/year" 
+            className={`text-sm font-medium transition-colors hover:text-primary ${
+              pathname === "/year" ? "text-primary" : "text-muted-foreground"
+            }`}
+          >
+            Yearly View
+          </Link>
         </div>
       </div>
     </nav>

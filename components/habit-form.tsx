@@ -4,7 +4,7 @@ import type React from "react"
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import type { Habit, Frequency, HabitCategory } from "@/lib/types"
+import { Habit, Frequency, HabitCategories } from "@/lib/types"
 import { createHabit, updateHabit } from "@/app/actions"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -12,6 +12,13 @@ import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 
 interface HabitFormProps {
   habit?: Habit
@@ -48,7 +55,7 @@ export function HabitForm({ habit, onCancel }: HabitFormProps) {
     goal: habit?.goal || 20,
     color: habit?.color || COLORS[0],
     emoji: habit?.emoji || "✨",
-    category: habit?.category || ("OTHER" as HabitCategory)
+    category: habit?.category || "OTHER"
   })
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -68,11 +75,16 @@ export function HabitForm({ habit, onCancel }: HabitFormProps) {
     setFormData((prev) => ({ ...prev, emoji }))
   }
 
+  const handleCategoryChange = (value: string) => {
+    setFormData((prev) => ({ ...prev, category: value.toUpperCase()}))
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsSubmitting(true)
 
     try {
+      formData.goal = Number(formData.goal)
       if (habit) {
         await updateHabit(habit.id, formData)
       } else {
@@ -119,6 +131,25 @@ export function HabitForm({ habit, onCancel }: HabitFormProps) {
           </div>
 
           <div className="space-y-2">
+            <Label htmlFor="category">Category</Label>
+            <Select
+              value={formData.category}
+              onValueChange={handleCategoryChange}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select a category" />
+              </SelectTrigger>
+              <SelectContent>
+                {HabitCategories.map((category) => (
+                  <SelectItem key={category} value={category}>
+                    {category.charAt(0) + category.slice(1).toLowerCase()}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
             <Label>Frequency</Label>
             <RadioGroup value={formData.frequency} onValueChange={handleFrequencyChange} className="flex space-x-4">
               <div className="flex items-center space-x-2">
@@ -128,6 +159,14 @@ export function HabitForm({ habit, onCancel }: HabitFormProps) {
               <div className="flex items-center space-x-2">
                 <RadioGroupItem value="weekly" id="weekly" />
                 <Label htmlFor="weekly">Weekly</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="monthly" id="monthly" />
+                <Label htmlFor="monthly">Monthly</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="yearly" id="yearly" />
+                <Label htmlFor="yearly">Yearly</Label>
               </div>
             </RadioGroup>
           </div>

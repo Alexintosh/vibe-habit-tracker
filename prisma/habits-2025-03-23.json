@@ -39,6 +39,26 @@
       "order": 3,
       "emoji": "🥣",
       "category": "GENERAL"
+    },
+    {
+      "name": "Clean the car",
+      "description": "",
+      "frequency": "monthly",
+      "goal": 1,
+      "color": "#C7D2FE",
+      "order": 4,
+      "emoji": "🧽",
+      "category": "GENERAL"
+    },
+    {
+      "name": "Finger Stretch",
+      "description": "https://www.youtube.com/watch?v=H6y0D_8kRoU&list=PL2oUcIWbb-AONWoaGiwFCPth7xbXkUH1Q&index=85",
+      "frequency": "weekly",
+      "goal": 1,
+      "color": "#A7F3D0",
+      "order": 5,
+      "emoji": "🖖",
+      "category": "GENERAL"
     }
   ]
 }

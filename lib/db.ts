@@ -1,6 +1,5 @@
-import type { Habit, HabitLog, HabitWithLogs, Frequency, HabitCategory } from "./types"
+import type { Habit, HabitLog, HabitWithLogs, Frequency } from "./types"
 import { prisma } from "./prisma"
-import type { Prisma } from "@prisma/client"
 
 type PrismaHabit = {
   id: string
@@ -10,7 +9,7 @@ type PrismaHabit = {
   goal: number
   color: string
   emoji?: string | null
-  category: HabitCategory
+  category: string
   order: number
   createdAt: Date
 }
