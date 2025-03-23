@@ -1,0 +1,44 @@
+{
+  "habits": [
+    {
+      "name": "Morning Meditation",
+      "description": "10 minutes of mindfulness",
+      "frequency": "daily",
+      "goal": 1,
+      "color": "#FF5733",
+      "order": 1,
+      "emoji": "✨",
+      "category": "GENERAL"
+    },
+    {
+      "name": "Eggs",
+      "description": "Start the day with protein and fruits",
+      "frequency": "weekly",
+      "goal": 1,
+      "color": "#33FF57",
+      "order": 2,
+      "emoji": "🥚",
+      "category": "GENERAL"
+    },
+    {
+      "name": "Yogourt",
+      "description": "oats with milk",
+      "frequency": "weekly",
+      "goal": 1,
+      "color": "#33FF57",
+      "order": 3,
+      "emoji": "🍨",
+      "category": "GENERAL"
+    },
+    {
+      "name": "Oatmeal",
+      "description": "oats with milk",
+      "frequency": "weekly",
+      "goal": 1,
+      "color": "#33FF57",
+      "order": 3,
+      "emoji": "🥣",
+      "category": "GENERAL"
+    }
+  ]
+}

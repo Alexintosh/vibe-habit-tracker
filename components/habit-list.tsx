@@ -60,7 +60,8 @@ export function SortableHabitRow({
             className="cursor-grab hover:bg-accent p-1 rounded" 
             {...listeners}
           >
-            <GripVertical className="h-4 w-4" />
+            {/* <GripVertical className="h-4 w-4" /> */}
+            <div className="h-4 w-4">{habit.emoji || '✨'}</div>
           </button>
           <div>
             <div className="font-medium">{habit.name}</div>

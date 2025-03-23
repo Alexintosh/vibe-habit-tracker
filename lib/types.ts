@@ -10,6 +10,7 @@ export interface Habit {
   category: HabitCategory
   goal: number
   color: string
+  emoji?: string
   createdAt: string
 }
 

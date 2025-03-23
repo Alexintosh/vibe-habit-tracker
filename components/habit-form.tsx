@@ -4,7 +4,7 @@ import type React from "react"
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import type { Habit, Frequency } from "@/lib/types"
+import type { Habit, Frequency, HabitCategory } from "@/lib/types"
 import { createHabit, updateHabit } from "@/app/actions"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -31,6 +31,12 @@ const COLORS = [
   "#FBCFE8", // pink-200
 ]
 
+// Common emojis for habits
+const COMMON_EMOJIS = [
+  "✨", "💪", "🏃‍♂️", "🧘‍♀️", "📚", "💧", "🥗", "😴", 
+  "🎯", "🎨", "🎸", "💻", "🧹", "🌱", "⭐", "❤️"
+]
+
 export function HabitForm({ habit, onCancel }: HabitFormProps) {
   const router = useRouter()
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -41,6 +47,8 @@ export function HabitForm({ habit, onCancel }: HabitFormProps) {
     frequency: habit?.frequency || ("daily" as Frequency),
     goal: habit?.goal || 20,
     color: habit?.color || COLORS[0],
+    emoji: habit?.emoji || "✨",
+    category: habit?.category || ("OTHER" as HabitCategory)
   })
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -54,6 +62,10 @@ export function HabitForm({ habit, onCancel }: HabitFormProps) {
 
   const handleColorChange = (color: string) => {
     setFormData((prev) => ({ ...prev, color }))
+  }
+
+  const handleEmojiChange = (emoji: string) => {
+    setFormData((prev) => ({ ...prev, emoji }))
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -150,6 +162,33 @@ export function HabitForm({ habit, onCancel }: HabitFormProps) {
                 />
               ))}
             </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label>Emoji</Label>
+            <div className="flex flex-wrap gap-2">
+              {COMMON_EMOJIS.map((emoji) => (
+                <button
+                  key={emoji}
+                  type="button"
+                  className={`w-10 h-10 text-xl flex items-center justify-center rounded-lg hover:bg-gray-100 ${
+                    formData.emoji === emoji ? "ring-2 ring-offset-2 ring-gray-400" : ""
+                  }`}
+                  onClick={() => handleEmojiChange(emoji)}
+                >
+                  {emoji}
+                </button>
+              ))}
+            </div>
+            <Input
+              id="emoji"
+              name="emoji"
+              value={formData.emoji}
+              onChange={handleChange}
+              className="mt-2"
+              placeholder="Or type your own emoji..."
+              maxLength={2}
+            />
           </div>
         </CardContent>
 

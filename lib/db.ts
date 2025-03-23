@@ -1,4 +1,4 @@
-import type { Habit, HabitLog, HabitWithLogs, Frequency } from "./types"
+import type { Habit, HabitLog, HabitWithLogs, Frequency, HabitCategory } from "./types"
 import { prisma } from "./prisma"
 import type { Prisma } from "@prisma/client"
 
@@ -9,6 +9,9 @@ type PrismaHabit = {
   frequency: string
   goal: number
   color: string
+  emoji?: string | null
+  category: HabitCategory
+  order: number
   createdAt: Date
 }
 
@@ -79,6 +82,7 @@ class HabitDatabase {
     return habits.map((habit: PrismaHabit) => ({
       ...habit,
       description: habit.description ?? '',
+      emoji: habit.emoji ?? '✨',
       frequency: habit.frequency as Frequency,
       createdAt: habit.createdAt.toISOString()
     }))
