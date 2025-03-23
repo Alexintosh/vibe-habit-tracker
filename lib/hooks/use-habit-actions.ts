@@ -37,19 +37,16 @@ export function useHabitActions(initialHabits: HabitWithLogs[]) {
 
     // Call server action
     await toggleHabitLog(habitId, formatDate(date))
-    notifyStateChange()
   }
 
   const handleEditHabit = (habit: Habit) => {
     setEditingHabit(habit)
-    notifyStateChange()
   }
 
   const handleDeleteHabit = async (habitId: string) => {
     await deleteHabit(habitId)
     // Update local state after successful deletion
     setHabits(habits.filter(h => h.id !== habitId))
-    notifyStateChange()
   }
 
   const handleReorder = async (newHabits: HabitWithLogs[]) => {
@@ -62,7 +59,6 @@ export function useHabitActions(initialHabits: HabitWithLogs[]) {
       order: index
     }))
     await updateHabitOrders(updates)
-    notifyStateChange()
   }
 
   return {
