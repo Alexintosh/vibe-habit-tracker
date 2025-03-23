@@ -1,27 +1,15 @@
 "use client"
-
-import { useState } from "react"
-import type { Habit, HabitWithLogs, HabitLog } from "@/lib/types"
-import { deleteHabit, deleteAllHabits, toggleHabitLog, updateHabitOrders } from "@/app/actions"
+import type { HabitWithLogs} from "@/lib/types"
 import { useAppContext } from "@/app/providers"
 import { formatDate, getDaysInMonth } from "@/lib/date-utils"
 import { Button } from "@/components/ui/button"
-import { Check, Edit, Plus, Trash, AlertTriangle, GripVertical } from "lucide-react"
+import { Check, GripVertical } from "lucide-react"
 import { HabitForm } from "./habit-form"
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog"
+import { HabitActions } from "./habit-actions"
 import { DndContext, DragEndEvent, KeyboardSensor, PointerSensor, closestCenter, useSensor, useSensors } from '@dnd-kit/core'
 import { SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
+import { useHabitActions } from "@/lib/hooks/use-habit-actions"
 
 interface HabitListProps {
   habits: HabitWithLogs[],
@@ -110,39 +98,11 @@ export function SortableHabitRow({
       <td className="text-center p-2">{habit.goal}</td>
       <td className="text-center p-2">{habit.achieved}</td>
       <td className="text-center p-2">
-        <div className="flex justify-center gap-1">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => onEditHabit(habit)}
-          >
-            <Edit className="h-4 w-4" />
-          </Button>
-          <AlertDialog>
-            <AlertDialogTrigger asChild>
-              <Button variant="ghost" size="icon">
-                <Trash className="h-4 w-4" />
-              </Button>
-            </AlertDialogTrigger>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>Delete Habit</AlertDialogTitle>
-                <AlertDialogDescription>
-                  This will permanently delete this habit and its tracking history.
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                <AlertDialogAction
-                  onClick={() => onDeleteHabit(habit.id)}
-                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                >
-                  Delete
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
-        </div>
+        <HabitActions
+          habit={habit}
+          onEdit={onEditHabit}
+          onDelete={onDeleteHabit}
+        />
       </td>
     </tr>
   )
@@ -150,9 +110,15 @@ export function SortableHabitRow({
 
 export function HabitList({ habits: initialHabits, title }: HabitListProps) {
   const { currentDate } = useAppContext()
-  const [habits, setHabits] = useState(initialHabits)
-  const [editingHabit, setEditingHabit] = useState<Habit | null>(null)
-  const [isAddingHabit, setIsAddingHabit] = useState(false)
+  const {
+    habits,
+    editingHabit,
+    setEditingHabit,
+    handleToggleLog,
+    handleEditHabit,
+    handleDeleteHabit,
+    handleReorder
+  } = useHabitActions(initialHabits)
 
   const year = currentDate.getFullYear()
   const month = currentDate.getMonth()
@@ -163,53 +129,6 @@ export function HabitList({ habits: initialHabits, title }: HabitListProps) {
     return date.getDate() === today.getDate() &&
            date.getMonth() === today.getMonth() &&
            date.getFullYear() === today.getFullYear()
-  }
-
-  const handleToggleLog = async (habitId: string, date: Date) => {
-    await toggleHabitLog(habitId, formatDate(date))
-    
-    // Update the local state to reflect the change
-    setHabits(habits.map(habit => {
-      if (habit.id !== habitId) return habit
-      
-      const formattedDate = formatDate(date)
-      const existingLog = habit.logs.find(log => log.date === formattedDate)
-      
-      const newLogs = existingLog
-        ? habit.logs.map(log => 
-            log.date === formattedDate 
-              ? { ...log, completed: !log.completed }
-              : log
-          )
-        : [...habit.logs, { 
-            id: `${habitId}-${formattedDate}`,
-            habitId,
-            date: formattedDate,
-            completed: true
-          }]
-
-      return {
-        ...habit,
-        logs: newLogs
-      }
-    }))
-  }
-
-  const handleDeleteHabit = async (habitId: string) => {
-    await deleteHabit(habitId)
-  }
-
-  const handleDeleteAllHabits = async () => {
-    await deleteAllHabits()
-  }
-
-  const handleEditHabit = (habit: Habit) => {
-    setEditingHabit(habit)
-  }
-
-  const handleCancelEdit = () => {
-    setEditingHabit(null)
-    setIsAddingHabit(false)
   }
 
   const handleColumnSelect = async (day: Date) => {
@@ -227,34 +146,8 @@ export function HabitList({ habits: initialHabits, title }: HabitListProps) {
 
     // Toggle all habits for this date
     for (const habit of habits) {
-      const log = habit.logs.find(log => log.date === date)
-      if ((log?.completed ?? false) !== shouldComplete) {
-        await toggleHabitLog(habit.id, date)
-      }
+      await handleToggleLog(habit.id, day)
     }
-
-    // Update local state after all toggles are complete
-    setHabits(habits.map(habit => {
-      const existingLog = habit.logs.find(log => log.date === date)
-      
-      const newLogs = existingLog
-        ? habit.logs.map(log => 
-            log.date === date 
-              ? { ...log, completed: shouldComplete }
-              : log
-          )
-        : [...habit.logs, { 
-            id: `${habit.id}-${date}`,
-            habitId: habit.id,
-            date,
-            completed: shouldComplete
-          }]
-
-      return {
-        ...habit,
-        logs: newLogs
-      }
-    }))
   }
 
   const sensors = useSensors(
@@ -272,81 +165,23 @@ export function HabitList({ habits: initialHabits, title }: HabitListProps) {
       const newIndex = habits.findIndex((item) => item.id === over?.id)
 
       // Create a deep copy of the habits array to preserve all properties
-      const newItems = habits.map(habit => {
-        const { logs, ...rest } = habit
-        return {
-          ...rest,
-          logs: logs.map(log => ({
-            id: log.id,
-            habitId: log.habitId,
-            date: log.date,
-            completed: log.completed
-          })) as HabitLog[],
-          achieved: habit.achieved
-        }
-      }) as HabitWithLogs[]
+      const newHabits = [...habits]
+      const [removed] = newHabits.splice(oldIndex, 1)
+      newHabits.splice(newIndex, 0, removed)
 
-      const [removed] = newItems.splice(oldIndex, 1)
-      newItems.splice(newIndex, 0, removed)
-
-      // Update the order property for each habit
-      const updates = newItems.map((habit, index) => ({
-        id: habit.id,
-        order: index
-      }))
-
-      // Save the new order to the database
-      await updateHabitOrders(updates)
-
-      // Update the local state
-      setHabits(newItems)
+      // Update the order through the hook
+      handleReorder(newHabits)
     }
   }
 
   if (editingHabit) {
-    return <HabitForm habit={editingHabit} onCancel={handleCancelEdit} />
-  }
-
-  if (isAddingHabit) {
-    return <HabitForm onCancel={handleCancelEdit} />
+    return <HabitForm habit={editingHabit} onCancel={() => setEditingHabit(null)} />
   }
 
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h2 className="text-xl font-semibold capitalize">{title} ({habits.length})</h2>
-        <div className="flex gap-2">
-          <Button onClick={() => setIsAddingHabit(true)} className="flex items-center gap-1">
-            <Plus className="h-4 w-4" />
-            <span>New Habit</span>
-          </Button>
-          
-          <AlertDialog>
-            <AlertDialogTrigger asChild>
-              <Button variant="destructive" className="flex items-center gap-1">
-                <Trash className="h-4 w-4" />
-                <span>Delete All</span>
-              </Button>
-            </AlertDialogTrigger>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle className="flex items-center gap-2">
-                  <AlertTriangle className="h-5 w-5 text-destructive" />
-                  Delete All Habits
-                </AlertDialogTitle>
-                <AlertDialogDescription>
-                  This action cannot be undone. This will permanently delete all your habits and their tracking history.
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                <AlertDialogAction onClick={handleDeleteAllHabits} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-                  Delete All
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
-        </div>
       </div>
 
       <div className="overflow-x-auto">

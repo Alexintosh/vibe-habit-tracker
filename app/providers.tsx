@@ -12,7 +12,7 @@ const AppContext = createContext<AppContextType | undefined>(undefined)
 export function AppProvider({ children }: { children: ReactNode }) {
   const [currentDate, setCurrentDate] = useState(() => {
     const now = new Date()
-    return new Date(now.getFullYear(), now.getMonth(), now.getDate())
+    return new Date(now.toLocaleString('en-US', { timeZone: 'UTC' }))
   })
 
   return <AppContext.Provider value={{ currentDate, setCurrentDate }}>{children}</AppContext.Provider>

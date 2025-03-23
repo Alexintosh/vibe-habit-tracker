@@ -11,6 +11,8 @@ export function CalendarHeader() {
   const month = currentDate.getMonth()
   const year = currentDate.getFullYear()
 
+  const monthName = currentDate.toLocaleString('en-US', { month: 'long' })
+
   const handlePrevMonth = () => {
     setCurrentDate(new Date(year, month - 1, 1))
   }
