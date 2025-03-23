@@ -27,7 +27,7 @@ export function CalendarHeader() {
         <ChevronLeft className="h-5 w-5" />
       </Button>
       <h2 className="text-xl font-semibold">
-        {getMonthName(month)}, {year}
+        {monthName}, {year}
       </h2>
       <Button variant="ghost" onClick={handleNextMonth} aria-label="Next month">
         <ChevronRight className="h-5 w-5" />

@@ -75,7 +75,6 @@ export function SortableHabitRow({
         const log = habit.logs.find((log) => log.date === date)
         return (
           <td 
-            key={date}
             className={`text-center p-2 ${isToday(day) ? 'bg-muted' : ''}`}
           >
             <Button

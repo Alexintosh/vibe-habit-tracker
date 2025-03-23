@@ -2,36 +2,11 @@ import { useState, useEffect, useRef } from "react"
 import { Habit, HabitWithLogs } from "@/lib/types"
 import { deleteHabit, toggleHabitLog, updateHabitOrders } from "@/app/actions"
 import { formatDate } from "@/lib/date-utils"
-import { useSyncContext } from "@/app/sync-provider"
 
 export function useHabitActions(initialHabits: HabitWithLogs[]) {
   const [habits, setHabits] = useState(initialHabits)
   const [editingHabit, setEditingHabit] = useState<Habit | null>(null)
-  const { notifyStateChange, syncState } = useSyncContext()
-  const isSyncing = useRef(false)
 
-  // Listen for sync updates
-  useEffect(() => {
-    const updateFromSync = async () => {
-      if (isSyncing.current) return
-      isSyncing.current = true
-      try {
-        const updatedHabits = await syncState()
-        // Only update if the habits have actually changed
-        if (JSON.stringify(updatedHabits) !== JSON.stringify(habits)) {
-          setHabits(updatedHabits)
-        }
-      } finally {
-        isSyncing.current = false
-      }
-    }
-
-    const syncInterval = setInterval(updateFromSync, 5000) // Sync every 5 seconds
-
-    return () => {
-      clearInterval(syncInterval)
-    }
-  }, [syncState])
 
   const handleToggleLog = async (habitId: string, date: Date) => {
     // Update the local state to reflect the change

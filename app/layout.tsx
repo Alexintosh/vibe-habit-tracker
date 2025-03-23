@@ -35,12 +35,10 @@ export default function RootLayout({
       <body className={`${inter.className} min-h-screen`}>
         <AppProvider>
           <NavMenu />
-          <SyncProvider onSync={handleSync}>
             <div className="absolute right-4 top-4">
               <LogoutButton />
             </div>
             {children}
-          </SyncProvider>
         </AppProvider>
       </body>
     </html>
