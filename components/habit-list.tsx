@@ -48,27 +48,27 @@ export function SortableHabitRow({
     opacity: isDragging ? 0.5 : 1,
   }
 
+  const rowClassName = `${isDragging ? 'bg-accent' : ''} ${habit.achieved >= habit.goal ? 'bg-green-50 hover:bg-green-100' : ''}`
+  const stickyCellClassName = `sticky left-0 shadow-[4px_0_4px_-4px_rgba(0,0,0,0.1)] z-20 ${rowClassName}`
+
   return (
     <tr 
       ref={setNodeRef} 
       style={style}
-      className={`border-t ${isDragging ? 'bg-accent' : ''} ${habit.achieved >= habit.goal ? 'bg-green-50 hover:bg-green-100' : ''}`}
+      className={`border-t ${rowClassName}`}
       {...attributes}
     >
-      <td className="p-2">
+      <td className={`p-2 ${stickyCellClassName} bg-white`}>
         <div className="flex items-center gap-2">
           <button 
             className="cursor-grab hover:bg-accent p-1 rounded" 
             {...listeners}
           >
-            {/* <GripVertical className="h-4 w-4" /> */}
             <div className="h-4 w-4">{habit.emoji || '✨'}</div>
           </button>
           <div>
             <div className="font-medium">{habit.name}</div>
-            {/* {habit.description && (
-              <div className="text-sm text-gray-500">{habit.description}</div>
-            )} */}
+            <div className="text-sm text-gray-500">{habit.achieved}/{habit.goal}</div>
           </div>
         </div>
       </td>
@@ -98,7 +98,7 @@ export function SortableHabitRow({
       })}
       <td className="text-center p-2">{habit.goal}</td>
       <td className="text-center p-2">{habit.achieved}</td>
-      <td className="text-center p-2">
+      <td className={`text-center p-2 sticky right-0 shadow-[-4px_0_4px_-4px_rgba(0,0,0,0.1)] z-20 ${rowClassName} bg-white`}>
         <HabitActions
           habit={habit}
           onEdit={onEditHabit}
@@ -189,15 +189,15 @@ export function HabitList({ habits: initialHabits, title, onHabitChange }: Habit
         <h2 className="text-xl font-semibold capitalize">{title} ({habits.length})</h2>
       </div>
 
-      <div className="overflow-x-auto">
+      <div className="overflow-x-auto relative [&::-webkit-scrollbar]:h-2 [&::-webkit-scrollbar-track]:bg-gray-100 [&::-webkit-scrollbar-thumb]:bg-gray-300 [&::-webkit-scrollbar-thumb]:rounded-full">
         <table className="w-full border-collapse">
           <thead>
-            <tr>
-              <th className="text-left p-2 min-w-[150px]">Habits</th>
+            <tr className="bg-white">
+              <th className="text-left p-2 min-w-[150px] sticky left-0 bg-white shadow-[4px_0_4px_-4px_rgba(0,0,0,0.1)] z-20">Habits</th>
               {daysInMonth.map((day) => (
                 <th 
                   key={day.getTime()}
-                  className={`text-center p-2 w-10 ${
+                  className={`text-center p-2 w-10 bg-white ${
                     isToday(day) ? 'bg-muted' : ''
                   }`}
                 >
@@ -216,9 +216,9 @@ export function HabitList({ habits: initialHabits, title, onHabitChange }: Habit
                   </div>
                 </th>
               ))}
-              <th className="text-center p-2 min-w-[80px]">Goal</th>
-              <th className="text-center p-2 min-w-[80px]">Achieved</th>
-              <th className="text-center p-2 min-w-[100px]">Actions</th>
+              <th className="text-center p-2 min-w-[80px] bg-white">Goal</th>
+              <th className="text-center p-2 min-w-[80px] bg-white">Achieved</th>
+              <th className="text-center p-2 min-w-[100px] sticky right-0 bg-white shadow-[-4px_0_4px_-4px_rgba(0,0,0,0.1)] z-20">Actions</th>
             </tr>
           </thead>
           <DndContext
