@@ -13,7 +13,8 @@ import { useHabitActions } from "@/lib/hooks/use-habit-actions"
 
 interface HabitListProps {
   habits: HabitWithLogs[],
-  title: string
+  title: string,
+  onHabitChange: () => Promise<void>
 }
 
 // Create a sortable row component
@@ -108,7 +109,7 @@ export function SortableHabitRow({
   )
 }
 
-export function HabitList({ habits: initialHabits, title }: HabitListProps) {
+export function HabitList({ habits: initialHabits, title, onHabitChange }: HabitListProps) {
   const { currentDate } = useAppContext()
   const {
     habits,
@@ -175,7 +176,11 @@ export function HabitList({ habits: initialHabits, title }: HabitListProps) {
   }
 
   if (editingHabit) {
-    return <HabitForm habit={editingHabit} onCancel={() => setEditingHabit(null)} />
+    return <HabitForm 
+      habit={editingHabit} 
+      onCancel={() => setEditingHabit(null)} 
+      onSuccess={onHabitChange}
+    />
   }
 
   return (

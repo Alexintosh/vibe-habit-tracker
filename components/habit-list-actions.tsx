@@ -17,11 +17,23 @@ import {
 } from "@/components/ui/alert-dialog"
 import { deleteAllHabits } from "@/app/actions"
 
-export function HabitListActions() {
+interface HabitListActionsProps {
+  onHabitChange: () => Promise<void>
+}
+
+export function HabitListActions({ onHabitChange }: HabitListActionsProps) {
   const [isAddingHabit, setIsAddingHabit] = useState(false)
 
+  const handleDeleteAll = async () => {
+    await deleteAllHabits()
+    await onHabitChange()
+  }
+
   if (isAddingHabit) {
-    return <HabitForm onCancel={() => setIsAddingHabit(false)} />
+    return <HabitForm onCancel={() => setIsAddingHabit(false)} onSuccess={async () => {
+      setIsAddingHabit(false)
+      await onHabitChange()
+    }} />
   }
 
   return (
@@ -50,7 +62,7 @@ export function HabitListActions() {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={deleteAllHabits} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+            <AlertDialogAction onClick={handleDeleteAll} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
               Delete All
             </AlertDialogAction>
           </AlertDialogFooter>

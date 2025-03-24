@@ -5,11 +5,15 @@ import { HabitWithLogs } from "@/lib/types"
 import { useHabitActions } from "@/lib/hooks/use-habit-actions"
 import { HabitForm } from "./habit-form"
 
-export function WeeklyHabitsContainer({
-  habits: initialHabits
-}: {
+interface WeeklyHabitsContainerProps {
   habits: HabitWithLogs[]
-}) {
+  onHabitChange: () => Promise<void>
+}
+
+export function WeeklyHabitsContainer({
+  habits: initialHabits,
+  onHabitChange
+}: WeeklyHabitsContainerProps) {
   const {
     habits,
     editingHabit,
@@ -25,7 +29,11 @@ export function WeeklyHabitsContainer({
   }
 
   if (editingHabit) {
-    return <HabitForm habit={editingHabit} onCancel={handleCancelEdit} />
+    return <HabitForm 
+      habit={editingHabit} 
+      onCancel={handleCancelEdit} 
+      onSuccess={onHabitChange}
+    />
   }
 
   return (

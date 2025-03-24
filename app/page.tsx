@@ -1,16 +1,59 @@
+"use client"
+
 import { getHabitsWithLogs } from "./actions"
 import { CalendarHeader } from "@/components/ui/calendar-header"
 import { HabitList } from "@/components/habit-list"
 import { ProgressSummary } from "@/components/progress-summary"
 import { HabitListActions } from "@/components/habit-list-actions"
-import { useEffect } from "react"
+import { useEffect, useState } from "react"
+import { HabitWithLogs } from "@/lib/types"
 
-export default async function Home() {
-  // Use start of current day to avoid hydration mismatch
-  const now = new Date()
-  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
-  const habits = await getHabitsWithLogs(today.getFullYear(), today.getMonth())
-  const habitCategories = [...new Set(habits.map((habit) => habit.category))]
+export default function Home() {
+  const [habits, setHabits] = useState<HabitWithLogs[]>([])
+  const [habitCategories, setHabitCategories] = useState<string[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  const fetchHabits = async () => {
+    try {
+      setIsLoading(true)
+      setError(null)
+      const now = new Date()
+      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+      const fetchedHabits = await getHabitsWithLogs(today.getFullYear(), today.getMonth())
+      setHabits(fetchedHabits)
+      setHabitCategories([...new Set(fetchedHabits.map((habit) => habit.category))])
+    } catch (err) {
+      setError("Failed to load habits. Please try again.")
+      console.error("Error fetching habits:", err)
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    fetchHabits()
+  }, [])
+
+  if (isLoading) {
+    return (
+      <main className="container mx-auto px-4 py-8">
+        <div className="flex items-center justify-center min-h-[200px]">
+          <div className="text-lg">Loading habits...</div>
+        </div>
+      </main>
+    )
+  }
+
+  if (error) {
+    return (
+      <main className="container mx-auto px-4 py-8">
+        <div className="flex items-center justify-center min-h-[200px]">
+          <div className="text-lg text-red-500">{error}</div>
+        </div>
+      </main>
+    )
+  }
 
   return (
     <>
@@ -21,13 +64,14 @@ export default async function Home() {
           <ProgressSummary habits={habits} />
 
           <div className="bg-white rounded-lg shadow-md p-6">
-            <HabitListActions />
+            <HabitListActions onHabitChange={fetchHabits} />
             <CalendarHeader />
             {habitCategories.map((category) => (
               <HabitList 
                 key={category}
                 habits={habits.filter((habit) => habit.category === category)} 
-                title={category} 
+                title={category}
+                onHabitChange={fetchHabits}
               />
             ))}
           </div>

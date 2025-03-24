@@ -23,6 +23,7 @@ import {
 interface HabitFormProps {
   habit?: Habit
   onCancel: () => void
+  onSuccess?: () => Promise<void>
 }
 
 const COLORS = [
@@ -44,7 +45,7 @@ const COMMON_EMOJIS = [
   "🎯", "🎨", "🎸", "💻", "🧹", "🌱", "⭐", "❤️"
 ]
 
-export function HabitForm({ habit, onCancel }: HabitFormProps) {
+export function HabitForm({ habit, onCancel, onSuccess }: HabitFormProps) {
   const router = useRouter()
   const [isSubmitting, setIsSubmitting] = useState(false)
 
@@ -91,6 +92,9 @@ export function HabitForm({ habit, onCancel }: HabitFormProps) {
         await createHabit(formData)
       }
       router.refresh()
+      if (onSuccess) {
+        await onSuccess()
+      }
       onCancel()
     } catch (error) {
       console.error("Error saving habit:", error)
