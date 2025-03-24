@@ -2,6 +2,7 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
+import { Settings, Database } from "lucide-react"
 
 export function NavMenu() {
   const pathname = usePathname()
@@ -49,6 +50,25 @@ export function NavMenu() {
             }`}
           >
             Yearly View
+          </Link>
+          <div className="flex-1" />
+          <Link 
+            href="/import-db" 
+            className={`text-sm font-medium transition-colors hover:text-primary flex items-center gap-2 ${
+              pathname === "/import-db" ? "text-primary" : "text-muted-foreground"
+            }`}
+          >
+            <Database className="h-4 w-4" />
+            Import DB
+          </Link>
+          <Link 
+            href="/settings" 
+            className={`text-sm font-medium transition-colors hover:text-primary flex items-center gap-2 ${
+              pathname === "/settings" ? "text-primary" : "text-muted-foreground"
+            }`}
+          >
+            <Settings className="h-4 w-4" />
+            Settings
           </Link>
         </div>
       </div>

@@ -19,18 +19,45 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL('/login', request.url))
   }
 
-  return NextResponse.next()
+  // Clone the request headers
+  const requestHeaders = new Headers(request.headers)
+  
+  // Create a new response
+  const response = NextResponse.next({
+    request: {
+      headers: requestHeaders,
+    },
+  })
+  
+  // Add the COOP and COEP headers to enable WASM features
+  response.headers.set('Cross-Origin-Embedder-Policy', 'require-corp')
+  response.headers.set('Cross-Origin-Opener-Policy', 'same-origin')
+  
+  // Add CORS headers for SQLite WASM files
+  if (request.nextUrl.pathname.startsWith('/sqlite-wasm')) {
+    response.headers.set('Access-Control-Allow-Origin', '*')
+    response.headers.set('Access-Control-Allow-Methods', 'GET, OPTIONS')
+    response.headers.set('Access-Control-Allow-Headers', 'Content-Type')
+    
+    // Set specific content type for WASM files
+    if (request.nextUrl.pathname.endsWith('.wasm')) {
+      response.headers.set('Content-Type', 'application/wasm')
+    } else if (request.nextUrl.pathname.endsWith('.js') || request.nextUrl.pathname.endsWith('.mjs')) {
+      response.headers.set('Content-Type', 'application/javascript')
+    }
+  }
+  
+  return response
 }
 
 export const config = {
   matcher: [
     /*
      * Match all request paths except for the ones starting with:
-     * - api (API routes)
      * - _next/static (static files)
      * - _next/image (image optimization files)
      * - favicon.ico (favicon file)
      */
-    '/((?!api|_next/static|_next/image|favicon.ico).*)',
+    '/((?!_next/static|_next/image|favicon.ico).*)',
   ],
 } 

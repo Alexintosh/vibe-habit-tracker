@@ -4,8 +4,11 @@ import { db } from "@/lib/db"
 import type { Habit } from "@/lib/types"
 import { revalidatePath } from "next/cache"
 import { PrismaClient } from "@prisma/client"
+import { prisma } from "@/lib/prisma"
+import { writeFile, readFile } from 'fs/promises'
+import { join } from 'path'
 
-const prisma = new PrismaClient()
+const prismaClient = new PrismaClient()
 
 export async function getHabits() {
   return db.getHabits()
@@ -61,5 +64,35 @@ export async function updateHabitOrders(updates: { id: string; order: number }[]
 
 export async function getTodayCompletedNonDailyHabits() {
   return db.getTodayCompletedNonDailyHabits()
+}
+
+export async function importDatabase(fileData: ArrayBufferLike): Promise<boolean> {
+  try {
+    // Disconnect current Prisma client
+    await prisma.$disconnect()
+
+    // Write the new database file
+    const buffer = Buffer.from(fileData)
+    await writeFile(join(process.cwd(), 'prisma', 'dev.db'), buffer)
+
+    // Reconnect Prisma client
+    await prisma.$connect()
+    
+    return true
+  } catch (error) {
+    console.error('Error importing database:', error)
+    return false
+  }
+}
+
+export async function exportDatabase(): Promise<ArrayBufferLike | null> {
+  try {
+    const filePath = join(process.cwd(), 'prisma', 'dev.db')
+    const buffer = await readFile(filePath)
+    return buffer.buffer
+  } catch (error) {
+    console.error('Error exporting database:', error)
+    return null
+  }
 }
 
