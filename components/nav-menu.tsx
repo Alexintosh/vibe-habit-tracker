@@ -16,6 +16,14 @@ export function NavMenu() {
               pathname === "/" ? "text-primary" : "text-muted-foreground"
             }`}
           >
+            Recap
+          </Link>
+          <Link 
+            href="/day" 
+            className={`text-sm font-medium transition-colors hover:text-primary ${
+              pathname === "/day" ? "text-primary" : "text-muted-foreground"
+            }`}
+          >
             Daily View
           </Link>
           <Link 

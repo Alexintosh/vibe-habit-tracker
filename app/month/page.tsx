@@ -1,10 +1,9 @@
 import { getHabitsWithLogs } from "@/app/actions"
-import { MonthlyHabitList } from "@/app/components/MonthlyHabitList"
+import { TodoListView } from "@/components/TodoListView"
 import { HabitListActions } from "@/components/habit-list-actions"
 
 export default async function MonthPage() {
   const today = new Date()
-  const currentDate = today.toISOString().split('T')[0]
   const habits = await getHabitsWithLogs(today.getFullYear(), today.getMonth())
   const habitsMonthly = habits.filter(h => h.frequency === 'monthly')
 
@@ -15,7 +14,7 @@ export default async function MonthPage() {
           <section>
             <h2 className="text-2xl font-bold mb-4">Monthly Habits</h2>
             <div className="mb-5"><HabitListActions/></div>
-            <MonthlyHabitList habits={habitsMonthly} currentDate={currentDate} />
+            <TodoListView habits={habitsMonthly} currentDate={today} />
           </section>
         )}
       </div>

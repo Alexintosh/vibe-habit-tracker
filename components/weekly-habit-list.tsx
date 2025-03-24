@@ -3,7 +3,6 @@
 import { startOfWeek, addDays, format, isToday } from "date-fns";
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors } from "@dnd-kit/core";
 import { SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy } from "@dnd-kit/sortable";
-import { Button } from "./ui/button";
 import type { HabitWithLogs } from "@/lib/types";
 import { SortableHabitRow } from "./habit-list";
 

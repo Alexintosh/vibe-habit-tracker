@@ -1,11 +1,10 @@
 import { HabitListActions } from "@/components/habit-list-actions"
 import { getHabitsWithLogs } from "../actions"
-import { MonthlyHabitList } from "../components/MonthlyHabitList"
+import { TodoListView } from "@/components/TodoListView"
 
 export default async function Home() {
   // Use start of current day to avoid hydration mismatch
   const today = new Date()
-  const currentDate = today.toISOString().split('T')[0]
   const habits = await getHabitsWithLogs(today.getFullYear(), today.getMonth())
   const habitsYearly = habits.filter((habit) => habit.frequency === "yearly")
 
@@ -16,7 +15,7 @@ export default async function Home() {
         <div className="mb-5"><HabitListActions/></div>
         <div className="space-y-8">
           <div className="bg-white rounded-lg shadow-md p-6">
-            <MonthlyHabitList habits={habitsYearly} currentDate={currentDate} />
+            <TodoListView habits={habitsYearly} currentDate={today} />
           </div>
         </div>
       </main>

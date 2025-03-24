@@ -51,7 +51,7 @@ export function SortableHabitRow({
     <tr 
       ref={setNodeRef} 
       style={style}
-      className={`border-t ${isDragging ? 'bg-accent' : ''}`}
+      className={`border-t ${isDragging ? 'bg-accent' : ''} ${habit.achieved >= habit.goal ? 'bg-green-50 hover:bg-green-100' : ''}`}
       {...attributes}
     >
       <td className="p-2">

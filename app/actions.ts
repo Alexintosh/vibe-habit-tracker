@@ -59,3 +59,7 @@ export async function updateHabitOrders(updates: { id: string; order: number }[]
   }
 }
 
+export async function getTodayCompletedNonDailyHabits() {
+  return db.getTodayCompletedNonDailyHabits()
+}
+

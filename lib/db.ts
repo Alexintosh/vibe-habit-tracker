@@ -211,9 +211,55 @@ class HabitDatabase {
     return habits.map((habit: PrismaHabit & { logs: PrismaHabitLog[] }) => ({
       ...habit,
       createdAt: habit.createdAt.toISOString(),
-      achieved: habit.logs.filter((log: PrismaHabitLog) => log.completed).length
+      achieved: this.isHabitAchieved(habit)
+      //achieved: habit.logs.filter((log: PrismaHabitLog) => log.completed).length
     }))
   }
+
+
+ isHabitAchieved(habit: PrismaHabit & { logs: PrismaHabitLog[] }): number {
+    const now = new Date()
+    let startDate: Date
+    let endDate = now
+
+    // Calculate date range based on frequency
+    switch (habit.frequency) {
+      case 'weekly':
+        startDate = new Date(now)
+        startDate.setDate(now.getDate() - ((now.getDay() + 6) % 7))
+        break
+      case 'monthly':
+        startDate = new Date(now.getFullYear(), now.getMonth(), 1)
+        break
+      case 'quarterly':
+        const quarter = Math.floor(now.getMonth() / 3)
+        startDate = new Date(now.getFullYear(), quarter * 3, 1)
+        break
+      case 'semiannual':
+        const halfYear = Math.floor(now.getMonth() / 6)
+        startDate = new Date(now.getFullYear(), halfYear * 6, 1)
+        break
+      case 'yearly':
+        startDate = new Date(now.getFullYear(), 0, 1)
+        break
+      default:
+        return 0 // Invalid frequency
+    }
+
+    // Format dates to match log date format
+    const startDateStr = startDate.toISOString().split('T')[0]
+    const endDateStr = endDate.toISOString().split('T')[0]
+
+    // Count completed logs within the frequency period
+    const completedInPeriod = habit.logs.filter(log => 
+      log.completed && 
+      log.date >= startDateStr && 
+      log.date <= endDateStr
+    ).length
+
+    return completedInPeriod
+  }
+  
 
   async updateHabitOrders(updates: { id: string; order: number }[]): Promise<boolean> {
     // Use a transaction to ensure all updates succeed or none do
@@ -226,6 +272,44 @@ class HabitDatabase {
       )
     )
     return true
+  }
+
+  async getTodayCompletedNonDailyHabits(): Promise<HabitWithLogs[]> {
+    const today = new Date().toISOString().split('T')[0]
+    
+    const habits = await prisma.habit.findMany({
+      where: {
+        frequency: {
+          not: 'daily'
+        },
+        logs: {
+          some: {
+            date: today,
+            completed: true
+          }
+        }
+      },
+      include: {
+        logs: {
+          where: {
+            date: today
+          }
+        }
+      },
+      orderBy: [
+        { order: 'asc' },
+        { createdAt: 'desc' }
+      ]
+    })
+
+    return habits.map((habit) => ({
+      ...habit,
+      description: habit.description ?? '',
+      emoji: habit.emoji ?? '✨',
+      frequency: habit.frequency as Frequency,
+      createdAt: habit.createdAt.toISOString(),
+      achieved: habit.logs.filter(log => log.completed).length
+    }))
   }
 }
 

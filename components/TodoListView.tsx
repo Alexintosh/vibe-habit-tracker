@@ -5,37 +5,54 @@ import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import type { HabitWithLogs } from "@/lib/types"
 import { useState } from "react"
+import { HabitActions } from "./habit-actions"
+import { useHabitActions } from "@/lib/hooks/use-habit-actions"
+import { HabitForm } from "./habit-form"
 
-interface MonthlyHabitListProps {
+interface TodoListViewProps {
   habits: HabitWithLogs[]
-  currentDate: string // Format: YYYY-MM-DD
+  currentDate: Date // Format: YYYY-MM-DD
 }
 
-export function MonthlyHabitList({ habits, currentDate }: MonthlyHabitListProps) {
+export function TodoListView({ habits, currentDate }: TodoListViewProps) {
   const [isUpdating, setIsUpdating] = useState<string | null>(null)
+  const currentDateStr = currentDate.toISOString().split('T')[0]
 
-  const handleToggle = async (habitId: string) => {
-    setIsUpdating(habitId)
-    try {
-      await toggleHabitLog(habitId, currentDate)
-    } catch (error) {
-      console.error('Failed to toggle habit:', error)
-    } finally {
-      setIsUpdating(null)
-    }
+  
+  const order = habits.sort((a, b) => {
+    if(a.logs.length === 0) return 1;
+    return a.logs[0].completed === true ? -1 : 1
+  })
+  console.log("order", order);
+
+  const {
+    editingHabit,
+    setEditingHabit,
+    handleToggleLog,
+    handleEditHabit,
+    handleDeleteHabit,
+  } = useHabitActions(habits)
+
+  const handleCancelEdit = () => {
+    setEditingHabit(null)
+  }
+
+  if (editingHabit) {
+    return <HabitForm habit={editingHabit} onCancel={handleCancelEdit} />
   }
 
   return (
     <div className="space-y-3">
-      {habits.map((habit) => (
+
+      {order.map((habit) => (
         <Card 
           key={habit.id}
           className={`p-4 flex items-center justify-between hover:bg-gray-50 transition-colors cursor-pointer ${
-            habit.logs.some(log => log.date === currentDate && log.completed) 
+            habit.logs.some(log => log.date === currentDateStr && log.completed) 
               ? 'bg-green-50 hover:bg-green-100' 
               : ''
           }`}
-          onClick={() => handleToggle(habit.id)}
+          onClick={() => handleToggleLog(habit.id, currentDate)}
         >
           <div className="flex items-center space-x-3">
             <span className="text-2xl" role="img" aria-label={`Habit emoji: ${habit.name}`}>
@@ -52,6 +69,11 @@ export function MonthlyHabitList({ habits, currentDate }: MonthlyHabitListProps)
             <div className="text-sm text-gray-500">
               {habit.achieved}/{habit.goal} this month
             </div>
+            <HabitActions
+              habit={habit}
+              onEdit={handleEditHabit}
+              onDelete={handleDeleteHabit}
+            />
             <Button 
               variant="ghost" 
               size="sm"
