@@ -3,9 +3,7 @@
 import { db } from "@/lib/db"
 import type { Habit } from "@/lib/types"
 import { revalidatePath } from "next/cache"
-import { PrismaClient } from "@prisma/client"
-
-const prisma = new PrismaClient()
+import { prisma } from "@/lib/prisma"
 
 export async function getHabits() {
   return db.getHabits()

@@ -12,9 +12,6 @@ export default async function Home() {
   const habits = await getHabitsWithLogs(today.getFullYear(), today.getMonth())
   const habitCategories = [...new Set(habits.map((habit) => habit.category))]
 
-    console.log(habits)
-    console.log(habitCategories)
-
   return (
     <>
       <main className="container mx-auto px-4 py-8">
