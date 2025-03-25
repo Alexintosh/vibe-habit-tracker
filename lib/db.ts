@@ -261,13 +261,16 @@ class HabitDatabase {
   }
   
 
-  async updateHabitOrders(updates: { id: string; order: number }[]): Promise<boolean> {
+  async updateHabitOrders(updates: { id: string; order: number; category?: string }[]): Promise<boolean> {
     // Use a transaction to ensure all updates succeed or none do
     await prisma.$transaction(
-      updates.map(({ id, order }) =>
+      updates.map(({ id, order, category }) =>
         prisma.habit.update({
           where: { id },
-          data: { order }
+          data: {
+            order,
+            ...(category && { category })
+          }
         })
       )
     )

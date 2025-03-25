@@ -53,10 +53,11 @@ export function useHabitActions(initialHabits: HabitWithLogs[]) {
     // Update local state first for optimistic update
     setHabits(newHabits)
 
-    // Then update the server
+    // Then update the server with both order and category
     const updates = newHabits.map((habit, index) => ({
       id: habit.id,
-      order: index
+      order: index,
+      category: habit.category
     }))
     await updateHabitOrders(updates)
   }

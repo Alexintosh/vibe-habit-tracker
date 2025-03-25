@@ -61,7 +61,7 @@ export default function WeekPage() {
           <HabitListActions onHabitChange={fetchHabits} />
         </div>
         <div className="space-y-8">
-          <div className="bg-white rounded-lg shadow-md p-6">
+          <div className="bg-white">
             <WeeklyHabitsContainer 
               habits={habitsWeekly} 
               onHabitChange={fetchHabits}
