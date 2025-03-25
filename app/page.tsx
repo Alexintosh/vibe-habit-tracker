@@ -13,14 +13,14 @@ export default function Home() {
   const [habitCategories, setHabitCategories] = useState<string[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [currentDate, setCurrentDate] = useState(() => new Date())
+  const [periodType, setPeriodType] = useState<PeriodType>('month')
 
-  const fetchHabits = async () => {
+  const fetchHabits = async (date: Date = currentDate) => {
     try {
       setIsLoading(true)
       setError(null)
-      const now = new Date()
-      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
-      const fetchedHabits = await getHabitsWithLogs(today.getFullYear(), today.getMonth())
+      const fetchedHabits = await getHabitsWithLogs(date.getFullYear(), date.getMonth())
       setHabits(fetchedHabits)
       setHabitCategories([...new Set(fetchedHabits.map((habit) => habit.category))])
     } catch (err) {
@@ -33,7 +33,11 @@ export default function Home() {
 
   useEffect(() => {
     fetchHabits()
-  }, [])
+  }, [currentDate])
+
+  const handleDateChange = (newDate: Date) => {
+    setCurrentDate(newDate)
+  }
 
   if (isLoading) {
     return (

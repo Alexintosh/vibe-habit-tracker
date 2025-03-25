@@ -289,7 +289,7 @@ export function WeeklyHabitList({
           </Button>
         </div>
       </div>
-      <div className="relative max-h-[calc(80vh-4rem)] overflow-auto">
+      <div className="relative">
         <table className="w-full">
           <thead className="sticky top-0 z-50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/75">
             <tr className="border-b [&>th]:bg-background/95 [&>th]:backdrop-blur supports-[backdrop-filter]:[&>th]:bg-background/75">

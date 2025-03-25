@@ -3,6 +3,7 @@
 import { HabitListActions } from "@/components/habit-list-actions"
 import { getHabitsWithLogs } from "../actions"
 import { WeeklyHabitsContainer } from "@/components/weekly-habits-container"
+import { PeriodNavigator } from "@/components/period-navigator"
 import { useEffect, useState } from "react"
 import { HabitWithLogs } from "@/lib/types"
 
@@ -11,14 +12,13 @@ export default function WeekPage() {
   const [habitsWeekly, setHabitsWeekly] = useState<HabitWithLogs[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [currentDate, setCurrentDate] = useState(() => new Date())
 
-  const fetchHabits = async () => {
+  const fetchHabits = async (date: Date = currentDate) => {
     try {
       setIsLoading(true)
       setError(null)
-      const now = new Date()
-      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
-      const fetchedHabits = await getHabitsWithLogs(today.getFullYear(), today.getMonth())
+      const fetchedHabits = await getHabitsWithLogs(date.getFullYear(), date.getMonth())
       setHabits(fetchedHabits)
       setHabitsWeekly(fetchedHabits.filter((habit) => habit.frequency === "weekly"))
     } catch (err) {
@@ -31,7 +31,11 @@ export default function WeekPage() {
 
   useEffect(() => {
     fetchHabits()
-  }, [])
+  }, [currentDate])
+
+  const handleDateChange = (newDate: Date) => {
+    setCurrentDate(newDate)
+  }
 
   if (isLoading) {
     return (
@@ -61,7 +65,12 @@ export default function WeekPage() {
           <HabitListActions onHabitChange={fetchHabits} />
         </div>
         <div className="space-y-8">
-          <div className="bg-white">
+          <div className="bg-white rounded-lg shadow-md p-6">
+            <PeriodNavigator 
+              currentDate={currentDate}
+              onDateChange={handleDateChange}
+              periodType="week"
+            />
             <WeeklyHabitsContainer 
               habits={habitsWeekly} 
               onHabitChange={fetchHabits}
