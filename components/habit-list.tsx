@@ -10,6 +10,8 @@ import { DndContext, DragEndEvent, KeyboardSensor, PointerSensor, closestCenter,
 import { SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { useHabitActions } from "@/lib/hooks/use-habit-actions"
+import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/ui/drawer"
+import { useState } from "react"
 
 interface HabitListProps {
   habits: HabitWithLogs[],
@@ -17,7 +19,75 @@ interface HabitListProps {
   onHabitChange: () => Promise<void>
 }
 
-// Create a sortable row component
+function HabitDetailsDrawer({ 
+  habit, 
+  open, 
+  onOpenChange 
+}: { 
+  habit: HabitWithLogs
+  open: boolean
+  onOpenChange: (open: boolean) => void
+}) {
+  const extractYouTubeId = (url: string) => {
+    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/
+    const match = url.match(regExp)
+    return match && match[2].length === 11 ? match[2] : null
+  }
+
+  const youtubeId = habit.description ? extractYouTubeId(habit.description) : null
+
+  return (
+    <Drawer open={open} onOpenChange={onOpenChange}>
+      <DrawerContent>
+        <DrawerHeader>
+          <DrawerTitle className="flex items-center gap-2">
+            <span className="text-2xl">{habit.emoji || '✨'}</span>
+            <span>{habit.name}</span>
+          </DrawerTitle>
+        </DrawerHeader>
+        <div className="p-4 space-y-4">
+            <h3 className="font-medium">Progress</h3>
+            <div className="flex items-center gap-2">
+              <div className="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden">
+                <div 
+                  className="h-full rounded-full transition-all"
+                  style={{ 
+                    width: `${(habit.achieved / habit.goal) * 100}%`,
+                    backgroundColor: habit.color
+                  }}
+                />
+              </div>
+              <span className="text-sm text-gray-600">{habit.achieved}/{habit.goal}</span>
+            </div>
+          </div>
+        <div className="p-4 space-y-4">
+          {youtubeId ? (
+            <div className="space-y-2">
+              <h3 className="font-medium">Video</h3>
+              <div className="flex justify-center">
+                <div className="relative w-full max-w-[50%] pt-[28.125%]">
+                  <iframe
+                    className="absolute top-0 left-0 w-full h-full rounded-lg"
+                    src={`https://www.youtube.com/embed/${youtubeId}`}
+                    title="YouTube video player"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowFullScreen
+                  />
+                </div>
+              </div>
+            </div>
+          ) : 
+            <div className="space-y-2">
+              <h3 className="font-medium">Description</h3>
+              <p className="text-sm text-gray-600">{habit.description}</p>
+            </div>
+          }
+        </div>
+      </DrawerContent>
+    </Drawer>
+  )
+}
+
 export function SortableHabitRow({ 
   habit, 
   daysInMonth,
@@ -33,6 +103,7 @@ export function SortableHabitRow({
   onDeleteHabit: (habitId: string) => void
   isToday: (date: Date) => boolean
 }) {
+  const [drawerOpen, setDrawerOpen] = useState(false)
   const {
     attributes,
     listeners,
@@ -52,60 +123,69 @@ export function SortableHabitRow({
   const stickyCellClassName = `sticky left-0 shadow-[4px_0_4px_-4px_rgba(0,0,0,0.1)] z-20 ${rowClassName}`
 
   return (
-    <tr 
-      ref={setNodeRef} 
-      style={style}
-      className={`border-t ${rowClassName}`}
-      {...attributes}
-    >
-      <td className={`p-2 ${stickyCellClassName} bg-white`}>
-        <div className="flex items-center gap-2">
-          <button 
-            className="cursor-grab hover:bg-accent p-1 rounded" 
-            {...listeners}
-          >
-            <div className="h-4 w-4">{habit.emoji || '✨'}</div>
-          </button>
-          <div>
-            <div className="font-medium">{habit.name}</div>
-            <div className="text-sm text-gray-500">{habit.achieved}/{habit.goal}</div>
-          </div>
-        </div>
-      </td>
-      {daysInMonth.map((day) => {
-        const date = formatDate(day)
-        const log = habit.logs.find((log) => log.date === date)
-        return (
-          <td 
-            className={`text-center p-2 ${isToday(day) ? 'bg-muted' : ''}`}
-          >
-            <Button
-              variant="ghost"
-              size="icon"
-              className={`h-6 w-6 transition-colors`}
-              style={{
-                backgroundColor: log?.completed 
-                  ? `${habit.color}` 
-                  : 'transparent',
-                opacity: log?.completed ? 1 : 0.2,
-              }}
-              onClick={() => onToggleLog(habit.id, day)}
+    <>
+      <tr 
+        ref={setNodeRef} 
+        style={style}
+        className={`border-t ${rowClassName}`}
+        {...attributes}
+      >
+        <td className={`p-2 ${stickyCellClassName} bg-white`}>
+          <div className="flex items-center gap-2">
+            <button 
+              className="cursor-grab hover:bg-accent p-1 rounded" 
+              {...listeners}
             >
-              {log?.completed && <Check className="h-4 w-4 text-foreground" />}
-            </Button>
-          </td>
-        )
-      })}
-      {/* <td className="text-center p-2">{habit.goal}</td>
-      <td className="text-center p-2">{habit.achieved}</td> */}
-      <td className={`text-center p-2 sticky right-0 shadow-[-4px_0_4px_-4px_rgba(0,0,0,0.1)] z-20 ${rowClassName} bg-white`}>
-        <HabitActions
-          habit={habit}
-          onEdit={onEditHabit}
-          onDelete={onDeleteHabit}
-        />
-      </td>
-    </tr>
+              <div className="h-4 w-4">{habit.emoji || '✨'}</div>
+            </button>
+            <div 
+              className="cursor-pointer hover:bg-accent p-2 rounded flex-1"
+              onClick={() => setDrawerOpen(true)}
+            >
+              <div className="font-medium">{habit.name}</div>
+              <div className="text-sm text-gray-500">{habit.achieved}/{habit.goal}</div>
+            </div>
+          </div>
+        </td>
+        {daysInMonth.map((day) => {
+          const date = formatDate(day)
+          const log = habit.logs.find((log) => log.date === date)
+          return (
+            <td 
+              key={day.getTime()}
+              className={`text-center p-2 ${isToday(day) ? 'bg-muted' : ''}`}
+            >
+              <Button
+                variant="ghost"
+                size="icon"
+                className={`h-6 w-6 transition-colors`}
+                style={{
+                  backgroundColor: log?.completed 
+                    ? `${habit.color}` 
+                    : 'transparent',
+                  opacity: log?.completed ? 1 : 0.2,
+                }}
+                onClick={() => onToggleLog(habit.id, day)}
+              >
+                {log?.completed && <Check className="h-4 w-4 text-foreground" />}
+              </Button>
+            </td>
+          )
+        })}
+        <td className={`text-center p-2 sticky right-0 shadow-[-4px_0_4px_-4px_rgba(0,0,0,0.1)] z-20 ${rowClassName} bg-white`}>
+          <HabitActions
+            habit={habit}
+            onEdit={onEditHabit}
+            onDelete={onDeleteHabit}
+          />
+        </td>
+      </tr>
+      <HabitDetailsDrawer
+        habit={habit}
+        open={drawerOpen}
+        onOpenChange={setDrawerOpen}
+      />
+    </>
   )
 }
 
@@ -216,8 +296,6 @@ export function HabitList({ habits: initialHabits, title, onHabitChange }: Habit
                   </div>
                 </th>
               ))}
-              {/* <th className="text-center p-2 min-w-[80px] bg-white">Goal</th>
-              <th className="text-center p-2 min-w-[80px] bg-white">Achieved</th> */}
               <th className="text-center p-2 min-w-[100px] sticky right-0 bg-white shadow-[-4px_0_4px_-4px_rgba(0,0,0,0.1)] z-20">Actions</th>
             </tr>
           </thead>

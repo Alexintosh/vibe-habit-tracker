@@ -7,6 +7,7 @@ export default async function MonthPage() {
   const habits = await getHabitsWithLogs(today.getFullYear(), today.getMonth())
   const habitsMonthly = habits.filter(h => h.frequency === 'daily')
   console.log("habitsMonthly", habitsMonthly);
+  //TODO this should be the same query as before, we don't need two different queries
   const completedHabits = await getTodayCompletedNonDailyHabits()
 
   return (
