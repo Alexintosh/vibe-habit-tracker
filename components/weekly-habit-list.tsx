@@ -6,9 +6,19 @@ import { SortableContext, sortableKeyboardCoordinates, verticalListSortingStrate
 import type { HabitWithLogs } from "@/lib/types";
 import { SortableHabitRow } from "./habit-list";
 import { HabitCategories } from "@/lib/types";
-import { ChevronRight } from "lucide-react";
-import { useState } from "react";
+import { ChevronRight, Search, ChevronsUpDown, Check, Filter } from "lucide-react";
+import { useState, useMemo } from "react";
 import { cn } from "@/lib/utils";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuCheckboxItem,
+  DropdownMenuContent,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface WeeklyHabitListProps {
   habits: HabitWithLogs[];
@@ -30,6 +40,12 @@ export function WeeklyHabitList({
     () => new Set(HabitCategories)
   );
 
+  // State for search and category filters
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedCategories, setSelectedCategories] = useState<Set<string>>(
+    () => new Set(HabitCategories)
+  );
+
   // State for active drag
   const [activeId, setActiveId] = useState<string | null>(null);
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
@@ -47,6 +63,41 @@ export function WeeklyHabitList({
     });
   };
 
+  // Toggle all categories
+  const toggleAllCategories = () => {
+    if (expandedCategories.size === HabitCategories.length) {
+      setExpandedCategories(new Set());
+    } else {
+      setExpandedCategories(new Set(HabitCategories));
+    }
+  };
+
+  // Filter habits based on search query and selected categories
+  const filteredHabits = useMemo(() => {
+    const query = searchQuery.toLowerCase();
+    
+    // If searching, temporarily include categories that match the search
+    const effectiveCategories = new Set(selectedCategories);
+    if (query) {
+      HabitCategories.forEach(category => {
+        if (category.toLowerCase().includes(query)) {
+          effectiveCategories.add(category);
+        }
+      });
+    }
+
+    return habits.filter(habit => {
+      const matchesSearch = !query || 
+        habit.name.toLowerCase().includes(query) || 
+        habit.description.toLowerCase().includes(query) ||
+        habit.category.toLowerCase().includes(query);
+      
+      const matchesCategory = effectiveCategories.has(habit.category);
+      
+      return matchesSearch && matchesCategory;
+    });
+  }, [habits, searchQuery, selectedCategories]);
+
   // Get current week days
   const startOfCurrentWeek = startOfWeek(new Date(), { weekStartsOn: 1 }); // Start from Monday
   const daysInWeek = Array.from({ length: 7 }, (_, i) => 
@@ -54,7 +105,7 @@ export function WeeklyHabitList({
   );
 
   // Group habits by category
-  const habitsByCategory = habits.reduce((acc, habit) => {
+  const habitsByCategory = filteredHabits.reduce((acc, habit) => {
     const category = habit.category || "OTHER";
     if (!acc[category]) {
       acc[category] = [];
@@ -63,12 +114,24 @@ export function WeeklyHabitList({
     return acc;
   }, {} as Record<string, HabitWithLogs[]>);
 
-  // Sort categories based on HabitCategories order
-  const sortedCategories = Object.keys(habitsByCategory).sort((a, b) => {
-    const indexA = HabitCategories.indexOf(a as typeof HabitCategories[number]);
-    const indexB = HabitCategories.indexOf(b as typeof HabitCategories[number]);
-    return indexA - indexB;
-  });
+  // Sort categories based on HabitCategories order and search relevance
+  const sortedCategories = useMemo(() => {
+    const query = searchQuery.toLowerCase();
+    return Object.keys(habitsByCategory).sort((a, b) => {
+      // If searching, prioritize matching categories
+      if (query) {
+        const aMatches = a.toLowerCase().includes(query);
+        const bMatches = b.toLowerCase().includes(query);
+        if (aMatches && !bMatches) return -1;
+        if (!aMatches && bMatches) return 1;
+      }
+      
+      // Fall back to default category order
+      const indexA = HabitCategories.indexOf(a as typeof HabitCategories[number]);
+      const indexB = HabitCategories.indexOf(b as typeof HabitCategories[number]);
+      return indexA - indexB;
+    });
+  }, [habitsByCategory, searchQuery]);
 
   // DnD sensors setup
   const sensors = useSensors(
@@ -146,10 +209,87 @@ export function WeeklyHabitList({
     setActiveCategory(null);
   };
 
+  // Toggle category filter
+  const toggleCategoryFilter = (category: string) => {
+    setSelectedCategories(prev => {
+      const next = new Set(prev);
+      if (next.has(category)) {
+        if (next.size > 1) { // Prevent deselecting all categories
+          next.delete(category);
+        }
+      } else {
+        next.add(category);
+      }
+      return next;
+    });
+  };
+
+  // Toggle all category filters
+  const toggleAllCategoryFilters = () => {
+    if (selectedCategories.size === HabitCategories.length) {
+      setSelectedCategories(new Set([HabitCategories[0]])); // Keep at least one
+    } else {
+      setSelectedCategories(new Set(HabitCategories));
+    }
+  };
+
   return (
     <div className="rounded-md border relative isolate">
-      <div className="relative max-h-[80vh] overflow-auto">
-        
+      <div className="sticky top-0 z-50 bg-background border-b p-4">
+        <div className="flex items-center gap-4">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              placeholder="Search habits..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-9"
+            />
+          </div>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button 
+                variant="outline" 
+                size="icon"
+                className={cn(
+                  selectedCategories.size !== HabitCategories.length && "text-primary"
+                )}
+              >
+                <Filter className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56">
+              <DropdownMenuLabel>Filter Categories</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuCheckboxItem
+                checked={selectedCategories.size === HabitCategories.length}
+                onCheckedChange={toggleAllCategoryFilters}
+              >
+                All Categories
+              </DropdownMenuCheckboxItem>
+              <DropdownMenuSeparator />
+              {HabitCategories.map((category) => (
+                <DropdownMenuCheckboxItem
+                  key={category}
+                  checked={selectedCategories.has(category)}
+                  onCheckedChange={() => toggleCategoryFilter(category)}
+                >
+                  {category}
+                </DropdownMenuCheckboxItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={toggleAllCategories}
+            title={expandedCategories.size === HabitCategories.length ? "Collapse all" : "Expand all"}
+          >
+            <ChevronsUpDown className="h-4 w-4" />
+          </Button>
+        </div>
+      </div>
+      <div className="relative max-h-[calc(80vh-4rem)] overflow-auto">
         <table className="w-full">
           <thead className="sticky top-0 z-50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/75">
             <tr className="border-b [&>th]:bg-background/95 [&>th]:backdrop-blur supports-[backdrop-filter]:[&>th]:bg-background/75">
