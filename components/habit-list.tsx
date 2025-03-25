@@ -96,8 +96,8 @@ export function SortableHabitRow({
           </td>
         )
       })}
-      <td className="text-center p-2">{habit.goal}</td>
-      <td className="text-center p-2">{habit.achieved}</td>
+      {/* <td className="text-center p-2">{habit.goal}</td>
+      <td className="text-center p-2">{habit.achieved}</td> */}
       <td className={`text-center p-2 sticky right-0 shadow-[-4px_0_4px_-4px_rgba(0,0,0,0.1)] z-20 ${rowClassName} bg-white`}>
         <HabitActions
           habit={habit}
@@ -216,8 +216,8 @@ export function HabitList({ habits: initialHabits, title, onHabitChange }: Habit
                   </div>
                 </th>
               ))}
-              <th className="text-center p-2 min-w-[80px] bg-white">Goal</th>
-              <th className="text-center p-2 min-w-[80px] bg-white">Achieved</th>
+              {/* <th className="text-center p-2 min-w-[80px] bg-white">Goal</th>
+              <th className="text-center p-2 min-w-[80px] bg-white">Achieved</th> */}
               <th className="text-center p-2 min-w-[100px] sticky right-0 bg-white shadow-[-4px_0_4px_-4px_rgba(0,0,0,0.1)] z-20">Actions</th>
             </tr>
           </thead>

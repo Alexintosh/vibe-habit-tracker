@@ -8,11 +8,15 @@ import { HabitForm } from "./habit-form"
 interface WeeklyHabitsContainerProps {
   habits: HabitWithLogs[]
   onHabitChange: () => Promise<void>
+  weekStart: Date
+  weekEnd: Date
 }
 
 export function WeeklyHabitsContainer({
   habits: initialHabits,
-  onHabitChange
+  onHabitChange,
+  weekStart,
+  weekEnd
 }: WeeklyHabitsContainerProps) {
   const {
     habits,
@@ -43,6 +47,8 @@ export function WeeklyHabitsContainer({
       onEditHabit={handleEditHabit}
       onDeleteHabit={handleDeleteHabit}
       onReorder={handleReorder}
+      weekStart={weekStart}
+      weekEnd={weekEnd}
     />
   )
 } 

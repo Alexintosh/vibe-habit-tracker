@@ -1,12 +1,13 @@
 "use client"
 
-import { getHabitsWithLogs } from "./actions"
+import { getHabitsWithLogs, getHabitsWithLogsByPeriod } from "./actions"
 import { CalendarHeader } from "@/components/ui/calendar-header"
 import { HabitList } from "@/components/habit-list"
 import { ProgressSummary } from "@/components/progress-summary"
 import { HabitListActions } from "@/components/habit-list-actions"
 import { useEffect, useState } from "react"
 import { HabitWithLogs } from "@/lib/types"
+import { endOfMonth, startOfMonth } from "date-fns"
 
 export default function Home() {
   const [habits, setHabits] = useState<HabitWithLogs[]>([])
@@ -20,7 +21,11 @@ export default function Home() {
     try {
       setIsLoading(true)
       setError(null)
-      const fetchedHabits = await getHabitsWithLogs(date.getFullYear(), date.getMonth())
+
+      // Get start of month and end of month
+      const monthStart = startOfMonth(date)
+      const monthEnd = endOfMonth(date)
+      const fetchedHabits = await getHabitsWithLogsByPeriod(monthStart, monthEnd)
       setHabits(fetchedHabits)
       setHabitCategories([...new Set(fetchedHabits.map((habit) => habit.category))])
     } catch (err) {

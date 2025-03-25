@@ -211,11 +211,291 @@ class HabitDatabase {
     return habits.map((habit: PrismaHabit & { logs: PrismaHabitLog[] }) => ({
       ...habit,
       createdAt: habit.createdAt.toISOString(),
-      achieved: this.isHabitAchieved(habit)
+      achieved: this.isHabitAchieved2(habit, (new Date(year, month, 1)), (new Date(year, month + 1, 0)))
       //achieved: habit.logs.filter((log: PrismaHabitLog) => log.completed).length
     }))
   }
 
+  async getHabitsWithLogsByPeriod(startDate: Date, endDate: Date): Promise<HabitWithLogs[]> {
+
+    const habits = await prisma.habit.findMany({
+      include: {
+        logs: {
+          where: {
+            date: {
+              gte: startDate.toISOString().split('T')[0],
+              lte: endDate.toISOString().split('T')[0]
+            }
+          }
+        }
+      },
+      orderBy: [
+        { order: 'asc' },
+        { createdAt: 'desc' }
+      ]
+    })
+
+    return habits.map((habit: PrismaHabit & { logs: PrismaHabitLog[] }) => ({
+      ...habit,
+      createdAt: habit.createdAt.toISOString(),
+      achieved: this.isHabitAchieved2(habit, startDate, endDate)
+    }))
+  }
+
+  isHabitAchieved2(
+    habit: PrismaHabit & { logs: PrismaHabitLog[] },
+    periodStart?: Date,
+    periodEnd?: Date
+  ): number {
+    // Default to current period if not specified
+    const now = new Date()
+    const endDate = periodEnd || now
+    
+    // Initialize the result object
+    const result = {
+      achieved: false,
+      completed: 0,
+      required: habit.goal || 0,
+      periods: [] as { start: Date, end: Date, achieved: boolean, completed: number }[]
+    }
+
+    // If no goal is set, return early
+    if (!habit.goal) {
+      return result
+    }
+
+    // Get the formatted date strings from logs for easy comparison
+    const completedLogDates = habit.logs
+      .filter(log => log.completed)
+      .map(log => log.date)
+
+    // Handle different frequencies
+    switch (habit.frequency) {
+      case 'weekly': {
+        // Determine periods to analyze
+        let currentPeriodStart: Date
+        
+        if (periodStart) {
+          // Start from the beginning of the week containing periodStart
+          currentPeriodStart = new Date(periodStart)
+          const dayOfWeek = currentPeriodStart.getDay()
+          // Adjust to Monday (weekStartsOn: 1)
+          currentPeriodStart.setDate(currentPeriodStart.getDate() - ((dayOfWeek + 6) % 7))
+        } else {
+          // Use current week
+          currentPeriodStart = new Date(now)
+          const dayOfWeek = currentPeriodStart.getDay()
+          currentPeriodStart.setDate(now.getDate() - ((dayOfWeek + 6) % 7))
+        }
+        
+        // Process each week in the range
+        while (currentPeriodStart <= endDate) {
+          const periodEnd = new Date(currentPeriodStart)
+          periodEnd.setDate(currentPeriodStart.getDate() + 6) // End of week (Sunday)
+          
+          // Count completed logs in this week
+          const startStr = currentPeriodStart.toISOString().split('T')[0]
+          const endStr = periodEnd.toISOString().split('T')[0]
+          
+          const completedInPeriod = completedLogDates.filter(
+            date => date >= startStr && date <= endStr
+          ).length
+          
+          // Record this period's results
+          result.periods.push({
+            start: new Date(currentPeriodStart),
+            end: new Date(periodEnd),
+            achieved: completedInPeriod >= habit.goal,
+            completed: completedInPeriod
+          })
+          
+          // Move to next week
+          currentPeriodStart.setDate(currentPeriodStart.getDate() + 7)
+        }
+        break
+      }
+      
+      case 'monthly': {
+        // Determine periods to analyze
+        let currentPeriodStart: Date
+        
+        if (periodStart) {
+          // Start from the beginning of the month containing periodStart
+          currentPeriodStart = new Date(periodStart.getFullYear(), periodStart.getMonth(), 1)
+        } else {
+          // Use current month
+          currentPeriodStart = new Date(now.getFullYear(), now.getMonth(), 1)
+        }
+        
+        // Process each month in the range
+        while (currentPeriodStart <= endDate) {
+          const periodEnd = new Date(currentPeriodStart)
+          // Last day of the month
+          periodEnd.setMonth(periodEnd.getMonth() + 1)
+          periodEnd.setDate(0)
+          
+          // Count completed logs in this month
+          const startStr = currentPeriodStart.toISOString().split('T')[0]
+          const endStr = periodEnd.toISOString().split('T')[0]
+          
+          const completedInPeriod = completedLogDates.filter(
+            date => date >= startStr && date <= endStr
+          ).length
+          
+          // Record this period's results
+          result.periods.push({
+            start: new Date(currentPeriodStart),
+            end: new Date(periodEnd),
+            achieved: completedInPeriod >= habit.goal,
+            completed: completedInPeriod
+          })
+          
+          // Move to next month
+          currentPeriodStart.setMonth(currentPeriodStart.getMonth() + 1)
+        }
+        break
+      }
+      
+      case 'quarterly': {
+        // Determine periods to analyze
+        let currentPeriodStart: Date
+        
+        if (periodStart) {
+          // Start from the beginning of the quarter containing periodStart
+          const quarter = Math.floor(periodStart.getMonth() / 3)
+          currentPeriodStart = new Date(periodStart.getFullYear(), quarter * 3, 1)
+        } else {
+          // Use current quarter
+          const quarter = Math.floor(now.getMonth() / 3)
+          currentPeriodStart = new Date(now.getFullYear(), quarter * 3, 1)
+        }
+        
+        // Process each quarter in the range
+        while (currentPeriodStart <= endDate) {
+          const periodEnd = new Date(currentPeriodStart)
+          // Last day of the quarter
+          periodEnd.setMonth(currentPeriodStart.getMonth() + 3)
+          periodEnd.setDate(0)
+          
+          // Count completed logs in this quarter
+          const startStr = currentPeriodStart.toISOString().split('T')[0]
+          const endStr = periodEnd.toISOString().split('T')[0]
+          
+          const completedInPeriod = completedLogDates.filter(
+            date => date >= startStr && date <= endStr
+          ).length
+          
+          // Record this period's results
+          result.periods.push({
+            start: new Date(currentPeriodStart),
+            end: new Date(periodEnd),
+            achieved: completedInPeriod >= habit.goal,
+            completed: completedInPeriod
+          })
+          
+          // Move to next quarter
+          currentPeriodStart.setMonth(currentPeriodStart.getMonth() + 3)
+        }
+        break
+      }
+      
+      case 'semiannual': {
+        // Determine periods to analyze
+        let currentPeriodStart: Date
+        
+        if (periodStart) {
+          // Start from the beginning of the half-year containing periodStart
+          const halfYear = Math.floor(periodStart.getMonth() / 6)
+          currentPeriodStart = new Date(periodStart.getFullYear(), halfYear * 6, 1)
+        } else {
+          // Use current half-year
+          const halfYear = Math.floor(now.getMonth() / 6)
+          currentPeriodStart = new Date(now.getFullYear(), halfYear * 6, 1)
+        }
+        
+        // Process each half-year in the range
+        while (currentPeriodStart <= endDate) {
+          const periodEnd = new Date(currentPeriodStart)
+          // Last day of the half-year
+          periodEnd.setMonth(currentPeriodStart.getMonth() + 6)
+          periodEnd.setDate(0)
+          
+          // Count completed logs in this half-year
+          const startStr = currentPeriodStart.toISOString().split('T')[0]
+          const endStr = periodEnd.toISOString().split('T')[0]
+          
+          const completedInPeriod = completedLogDates.filter(
+            date => date >= startStr && date <= endStr
+          ).length
+          
+          // Record this period's results
+          result.periods.push({
+            start: new Date(currentPeriodStart),
+            end: new Date(periodEnd),
+            achieved: completedInPeriod >= habit.goal,
+            completed: completedInPeriod
+          })
+          
+          // Move to next half-year
+          currentPeriodStart.setMonth(currentPeriodStart.getMonth() + 6)
+        }
+        break
+      }
+      
+      case 'yearly': {
+        // Determine periods to analyze
+        let currentPeriodStart: Date
+        
+        if (periodStart) {
+          // Start from the beginning of the year containing periodStart
+          currentPeriodStart = new Date(periodStart.getFullYear(), 0, 1)
+        } else {
+          // Use current year
+          currentPeriodStart = new Date(now.getFullYear(), 0, 1)
+        }
+        
+        // Process each year in the range
+        while (currentPeriodStart <= endDate) {
+          const periodEnd = new Date(currentPeriodStart.getFullYear(), 11, 31)
+          
+          // Count completed logs in this year
+          const startStr = currentPeriodStart.toISOString().split('T')[0]
+          const endStr = periodEnd.toISOString().split('T')[0]
+          
+          const completedInPeriod = completedLogDates.filter(
+            date => date >= startStr && date <= endStr
+          ).length
+          
+          // Record this period's results
+          result.periods.push({
+            start: new Date(currentPeriodStart),
+            end: new Date(periodEnd),
+            achieved: completedInPeriod >= habit.goal,
+            completed: completedInPeriod
+          })
+          
+          // Move to next year
+          currentPeriodStart.setFullYear(currentPeriodStart.getFullYear() + 1)
+        }
+        break
+      }
+    }
+    
+    // For the overall period, check if all subperiods achieved their goals
+    // or if the most recent period achieved its goal
+    if (result.periods.length > 0) {
+      // Count total completions across all periods
+      result.completed = result.periods.reduce((sum, period) => sum + period.completed, 0)
+      
+      // Check if the most recent relevant period achieved its goal
+      const mostRecentPeriod = result.periods[result.periods.length - 1]
+      if (mostRecentPeriod && mostRecentPeriod.end >= now) {
+        result.achieved = mostRecentPeriod.achieved
+      }
+    }
+    
+    return result.completed
+  }
 
  isHabitAchieved(habit: PrismaHabit & { logs: PrismaHabitLog[] }): number {
     const now = new Date()

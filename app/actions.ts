@@ -46,6 +46,10 @@ export async function getHabitsWithLogs(year: number, month: number) {
   return db.getHabitsWithLogs(year, month)
 }
 
+export async function getHabitsWithLogsByPeriod(startDate: Date, endDate: Date) {
+  return db.getHabitsWithLogsByPeriod(startDate, endDate)
+}
+
 export async function updateHabitOrders(updates: { id: string; order: number; category?: string }[]) {
   try {
     await db.updateHabitOrders(updates)

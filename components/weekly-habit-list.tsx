@@ -26,6 +26,8 @@ interface WeeklyHabitListProps {
   onEditHabit: (habit: HabitWithLogs) => void;
   onDeleteHabit: (habitId: string) => void;
   onReorder: (habits: HabitWithLogs[]) => void;
+  weekStart: Date;
+  weekEnd: Date;
 }
 
 export function WeeklyHabitList({ 
@@ -33,7 +35,9 @@ export function WeeklyHabitList({
   onToggleLog, 
   onEditHabit, 
   onDeleteHabit,
-  onReorder 
+  onReorder,
+  weekStart,
+  weekEnd
 }: WeeklyHabitListProps) {
   // State for expanded categories
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(
@@ -98,10 +102,9 @@ export function WeeklyHabitList({
     });
   }, [habits, searchQuery, selectedCategories]);
 
-  // Get current week days
-  const startOfCurrentWeek = startOfWeek(new Date(), { weekStartsOn: 1 }); // Start from Monday
+  // Get days in week
   const daysInWeek = Array.from({ length: 7 }, (_, i) => 
-    addDays(startOfCurrentWeek, i)
+    addDays(weekStart, i)
   );
 
   // Group habits by category
@@ -302,8 +305,8 @@ export function WeeklyHabitList({
                   </div>
                 </th>
               ))}
-              <th className="p-2 text-center">Goal</th>
-              <th className="p-2 text-center">Done</th>
+              {/* <th className="p-2 text-center">Goal</th>
+              <th className="p-2 text-center">Done</th> */}
               <th className="p-2 text-center">Actions</th>
             </tr>
           </thead>
