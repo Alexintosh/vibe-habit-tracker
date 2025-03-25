@@ -1,6 +1,16 @@
 export type Frequency = "daily" | "weekly" | "monthly" | "yearly" | "quarterly" | "semiannual"
 
-export const HabitCategories = ["MORNING", "BREAKFAST", "HEALTH", "BUILDING", "OTHER", "ADULTING", "SELF IMPROVEMENT"] as const;
+export const HabitCategories = [
+  "MORNING", 
+  "BREAKFAST", 
+  "HEALTH", 
+  "BUILDING", 
+  "OTHER", 
+  "ADULTING", 
+  "SELF IMPROVEMENT",
+  "FITNESS",
+  "NUTRITION"
+] as const;
 
 export interface Habit {
   id: string

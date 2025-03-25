@@ -5,6 +5,10 @@ import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, us
 import { SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import type { HabitWithLogs } from "@/lib/types";
 import { SortableHabitRow } from "./habit-list";
+import { HabitCategories } from "@/lib/types";
+import { ChevronRight } from "lucide-react";
+import { useState } from "react";
+import { cn } from "@/lib/utils";
 
 interface WeeklyHabitListProps {
   habits: HabitWithLogs[];
@@ -21,11 +25,46 @@ export function WeeklyHabitList({
   onDeleteHabit,
   onReorder 
 }: WeeklyHabitListProps) {
+  // State for expanded categories
+  const [expandedCategories, setExpandedCategories] = useState<Set<string>>(
+    () => new Set(HabitCategories)
+  );
+
+  // Toggle category expansion
+  const toggleCategory = (category: string) => {
+    setExpandedCategories(prev => {
+      const next = new Set(prev);
+      if (next.has(category)) {
+        next.delete(category);
+      } else {
+        next.add(category);
+      }
+      return next;
+    });
+  };
+
   // Get current week days
   const startOfCurrentWeek = startOfWeek(new Date(), { weekStartsOn: 1 }); // Start from Monday
   const daysInWeek = Array.from({ length: 7 }, (_, i) => 
     addDays(startOfCurrentWeek, i)
   );
+
+  // Group habits by category
+  const habitsByCategory = habits.reduce((acc, habit) => {
+    const category = habit.category || "OTHER";
+    if (!acc[category]) {
+      acc[category] = [];
+    }
+    acc[category].push(habit);
+    return acc;
+  }, {} as Record<string, HabitWithLogs[]>);
+
+  // Sort categories based on HabitCategories order
+  const sortedCategories = Object.keys(habitsByCategory).sort((a, b) => {
+    const indexA = HabitCategories.indexOf(a as typeof HabitCategories[number]);
+    const indexB = HabitCategories.indexOf(b as typeof HabitCategories[number]);
+    return indexA - indexB;
+  });
 
   // DnD sensors setup
   const sensors = useSensors(
@@ -71,30 +110,50 @@ export function WeeklyHabitList({
               <th className="p-2 text-center">Actions</th>
             </tr>
           </thead>
-          <tbody>
-            <DndContext
-              sensors={sensors}
-              collisionDetection={closestCenter}
-              onDragEnd={handleDragEnd}
-            >
-              <SortableContext
-                items={habits.map((h) => h.id)}
-                strategy={verticalListSortingStrategy}
-              >
-                {habits.map((habit) => (
-                  <SortableHabitRow
-                    key={habit.id}
-                    habit={habit}
-                    daysInMonth={daysInWeek}
-                    onToggleLog={onToggleLog}
-                    onEditHabit={onEditHabit}
-                    onDeleteHabit={onDeleteHabit}
-                    isToday={isToday}
-                  />
-                ))}
-              </SortableContext>
-            </DndContext>
-          </tbody>
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragEnd={handleDragEnd}
+          >
+            {sortedCategories.map((category) => (
+              <tbody key={category}>
+                <tr 
+                  className="bg-muted/50 cursor-pointer hover:bg-muted/70 transition-colors"
+                  onClick={() => toggleCategory(category)}
+                >
+                  <td colSpan={12} className="p-2 font-medium">
+                    <div className="flex items-center gap-2">
+                      <ChevronRight 
+                        className={cn(
+                          "h-4 w-4 transition-transform",
+                          expandedCategories.has(category) && "rotate-90"
+                        )}
+                      />
+                      {category}
+                    </div>
+                  </td>
+                </tr>
+                {expandedCategories.has(category) && (
+                  <SortableContext
+                    items={habitsByCategory[category].map((h) => h.id)}
+                    strategy={verticalListSortingStrategy}
+                  >
+                    {habitsByCategory[category].map((habit) => (
+                      <SortableHabitRow
+                        key={habit.id}
+                        habit={habit}
+                        daysInMonth={daysInWeek}
+                        onToggleLog={onToggleLog}
+                        onEditHabit={onEditHabit}
+                        onDeleteHabit={onDeleteHabit}
+                        isToday={isToday}
+                      />
+                    ))}
+                  </SortableContext>
+                )}
+              </tbody>
+            ))}
+          </DndContext>
         </table>
       </div>
     </div>
